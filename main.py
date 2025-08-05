@@ -33,12 +33,22 @@ class MyMaxOp(MaxOp):
             for i in range(self.num_inputs)
         ]
         return inspect.Signature((*dps_args, *args), return_annotation=None)
+    
+
+def get_the_number_of_outputs(gm: torch.fx.GraphModule) -> int:
+    result = 0
+    for node in gm.graph.nodes:
+        print(node.target)
+        print(type(node.target))
 
 
 def my_compiler(gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor]):
     gm.graph.print_tabular()
 
+    get_the_number_of_outputs(gm)
+
     def max_add_i_want_to_use(*args):
+        print("i'm executed")
         return sum(args)
 
     op = MyMaxOp(
@@ -56,18 +66,29 @@ def my_compiler(gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor]):
         result = args[0].new_empty(args[0].shape)
         custom_op_def(result, *args)
         return [result]
-
+    print("compiler done!:!!!!!!!!!")
     return torch_add_with_max
 
 
 @torch.compile(backend=my_compiler)
-def fn(x, y):
-    return x + y
+def fn(x, y, z):
+    print("pytorch running")
+    return my_add(x, y) + z
+
+
+def my_add(a, b):
+    return a + b
+
+
 
 
 a = torch.randn(3)
 print(a)
 b = torch.randn(3)
 print(b)
+c = torch.randn(3)
+print(c)
 
-print(fn(a, b))
+print(fn(a, b, c))
+print(fn(a, b, c))
+print(fn(a, b, c))
