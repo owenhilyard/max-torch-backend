@@ -62,6 +62,9 @@ IDENTICAL_FUNCTIONS = [
 
 
 MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
+    torch.abs: max.graph.ops.abs,
+    torch.cos: max.graph.ops.cos,
+    torch.sin: max.graph.ops.sin,
     
 }
 
@@ -84,7 +87,6 @@ def my_compiler(gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor]):
 
         args_index = 0
         for node in gm.graph.nodes:
-            #print(f"{mapping_names_to_tensors=}")
             if node.op == "placeholder":
                 mapping_names_to_tensors[node.name] = args[args_index]
                 args_index += 1
@@ -118,7 +120,7 @@ def my_compiler(gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor]):
 
 
 def fn(x, y, z):
-    return x + y + z, x + z - y + 1
+    return x + y + z, x + torch.abs(z) - torch.cos(y) + 1
 
 
 fn_compiled = torch.compile(backend=my_compiler)(fn)
