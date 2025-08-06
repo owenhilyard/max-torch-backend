@@ -21,10 +21,15 @@ IDENTICAL_FUNCTIONS = [
 ]
 
 
+def torch_cat_equivalent(tensors: list, dim=0):
+    return max.graph.ops.concat(tensors, axis=dim)
+
+
 MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     torch.abs: max.graph.ops.abs,
     torch.cos: max.graph.ops.cos,
     torch.sin: max.graph.ops.sin,
+    torch.cat: torch_cat_equivalent,
 }
 
 for func in IDENTICAL_FUNCTIONS:

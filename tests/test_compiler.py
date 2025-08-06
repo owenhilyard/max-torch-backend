@@ -132,6 +132,16 @@ def test_sin(device: str, tensor_shapes: tuple):
     check_functions_are_equivalent(fn, device, [a])
 
 
+def test_cat(device: str, tensor_shapes: tuple):
+    def fn(x, y):
+        return torch.cat([x, y], dim=0)
+
+    a = torch.randn(tensor_shapes)
+    b = torch.randn(tensor_shapes)
+
+    check_functions_are_equivalent(fn, device, [a, b])
+
+
 def test_combination_add_mul(device: str, tensor_shapes: tuple):
     def fn(x, y, z):
         return (x + y) * z

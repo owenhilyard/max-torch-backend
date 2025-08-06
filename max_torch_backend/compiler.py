@@ -19,6 +19,8 @@ class TensorsBook:
             return self.tensors[something.name]
         elif isinstance(something, int):
             return something
+        elif isinstance(something, torch.fx.immutable_collections.immutable_list):
+            return [self.convert_to_max(x) for x in something]
         raise ValueError(f"Unsupported type: {type(something)}")
 
 

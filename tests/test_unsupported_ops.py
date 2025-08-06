@@ -46,22 +46,6 @@ def test_unsupported_reshape_error():
         fn_compiled(a)
 
 
-def test_unsupported_concatenate_error():
-    def fn(x, y):
-        return torch.cat([x, y], dim=0)
-
-    fn_compiled = torch.compile(backend=modular_max_compiler)(fn)
-
-    a = torch.randn(3, 4)
-    b = torch.randn(3, 4)
-
-    with pytest.raises(
-        ValueError,
-        match="Unsupported type: <class 'torch.fx.immutable_collections.immutable_list'>",
-    ):
-        fn_compiled(a, b)
-
-
 def test_unsupported_log_error():
     def fn(x):
         return torch.log(x)
