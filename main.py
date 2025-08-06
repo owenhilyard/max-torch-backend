@@ -1,7 +1,7 @@
 
 import torch
 import max
-from max.torch.torch import graph_op, MaxOp, CustomOpLibrary
+from max.torch.torch import MaxOp, CustomOpLibrary
 import inspect
 from max.graph import KernelLibrary
 from max import mlir
@@ -65,7 +65,6 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     torch.abs: max.graph.ops.abs,
     torch.cos: max.graph.ops.cos,
     torch.sin: max.graph.ops.sin,
-    
 }
 
 for func in IDENTICAL_FUNCTIONS:
@@ -75,6 +74,15 @@ def my_compiler(gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor]):
     gm.graph.print_tabular()
 
     nb_outputs = get_the_number_of_outputs(gm)
+    
+    # Run shape propagation to determine output shapes
+    output_shapes = []
+    with torch.no_grad():
+        fake_output = gm(*example_inputs)
+        if isinstance(fake_output, torch.Tensor):
+            output_shapes = [fake_output.shape]
+        else:
+            output_shapes = [out.shape for out in fake_output]
 
     def max_add_i_want_to_use(*args):
         mapping_names_to_tensors = {}
@@ -112,7 +120,7 @@ def my_compiler(gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor]):
     custom_op_def = op.custom_op_def()
 
     def torch_add_with_max(*args) -> torch.Tensor:
-        results = [args[0].new_empty(args[0].shape) for _ in range(nb_outputs)]
+        results = [args[0].new_empty(shape) for shape in output_shapes]
         custom_op_def(*results, *args)
         return results
     print("compiler done!:!!!!!!!!!")
