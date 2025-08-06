@@ -72,18 +72,15 @@ for func in IDENTICAL_FUNCTIONS:
 
 def my_compiler(gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor]):
     gm.graph.print_tabular()
-
-    nb_outputs = get_the_number_of_outputs(gm)
     
-    # Run shape propagation to determine output shapes
-    output_shapes = []
+    # Use meta tensors (no memory allocation, no computation)
+    # Meta tensors only track shape/dtype/device metadata
+    meta_inputs = [torch.empty_like(inp, device='meta') for inp in example_inputs]
     with torch.no_grad():
-        fake_output = gm(*example_inputs)
-        if isinstance(fake_output, torch.Tensor):
-            output_shapes = [fake_output.shape]
-        else:
-            output_shapes = [out.shape for out in fake_output]
-
+        meta_outputs = gm(*meta_inputs)
+        if isinstance(meta_outputs, torch.Tensor):
+            meta_outputs = [meta_outputs]
+    
     def max_add_i_want_to_use(*args):
         mapping_names_to_tensors = {}
 
@@ -120,7 +117,7 @@ def my_compiler(gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor]):
     custom_op_def = op.custom_op_def()
 
     def torch_add_with_max(*args) -> torch.Tensor:
-        results = [args[0].new_empty(shape) for shape in output_shapes]
+        results = [torch.empty_like(x, device=args[0].device) for x in meta_outputs]
         custom_op_def(*results, *args)
         return results
     print("compiler done!:!!!!!!!!!")
