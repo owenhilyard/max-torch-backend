@@ -28,5 +28,6 @@ skip-magic-trailing-comma = true
 [dependency-groups]
 dev = [
     "pytest>=8.4.1",
+    "pytest-xdist>=3.8.0",
     "ruff>=0.12.7",
 ]
