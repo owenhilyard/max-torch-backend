@@ -4,7 +4,7 @@ import torch
 from max.torch.torch import MaxOp
 
 
-class MyMaxOp(MaxOp):
+class CompiledFunctionMaxOp(MaxOp):
     def __init__(self, *args, num_inputs: int, **kwargs):
         self.num_inputs = num_inputs
         super().__init__(*args, **kwargs)

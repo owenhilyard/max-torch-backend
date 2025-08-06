@@ -1,13 +1,13 @@
 import pytest
 import torch
 from collections.abc import Callable
-from max_torch_backend import my_compiler
+from max_torch_backend import modular_max_compiler
 
 
 def check_functions_are_equivalent(
     fn: Callable, device: str, inputs: list[torch.Tensor]
 ):
-    fn_compiled = torch.compile(backend=my_compiler)(fn)
+    fn_compiled = torch.compile(backend=modular_max_compiler)(fn)
 
     inputs_on_device = [input_tensor.to(device) for input_tensor in inputs]
 

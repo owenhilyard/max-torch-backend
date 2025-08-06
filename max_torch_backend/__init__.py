@@ -1,4 +1,3 @@
-from .compiler import my_compiler
-from .ops import MyMaxOp
+from .compiler import modular_max_compiler
 
-__all__ = ["my_compiler", "MyMaxOp"]
+__all__ = ["modular_max_compiler"]
