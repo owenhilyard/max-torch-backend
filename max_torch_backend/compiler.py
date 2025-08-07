@@ -24,22 +24,14 @@ class TensorsBook:
         raise ValueError(f"Unsupported type: {type(something)}")
 
 
-def modular_max_compiler(gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor]):
-    gm.graph.print_tabular()
+class CustomOpFunction:
+    def __init__(self, gm: torch.fx.GraphModule):
+        self.gm = gm
 
-    # Use meta tensors (no memory allocation, no computation)
-    # Meta tensors only track shape/dtype/device metadata
-    meta_inputs = [torch.empty_like(inp, device="meta") for inp in example_inputs]
-    with torch.no_grad():
-        meta_outputs = gm(*meta_inputs)
-        if isinstance(meta_outputs, torch.Tensor):
-            meta_outputs = [meta_outputs]
-
-    def create_max_graph(*args):
+    def __call__(self, *args):
         tensor_book = TensorsBook()
-
         args_index = 0
-        for node in gm.graph.nodes:
+        for node in self.gm.graph.nodes:
             if node.op == "placeholder":
                 tensor_book[node.name] = args[args_index]
                 args_index += 1
@@ -59,20 +51,35 @@ def modular_max_compiler(gm: torch.fx.GraphModule, example_inputs: list[torch.Te
             elif node.op == "output":
                 return tuple(tensor_book.convert_to_max(x) for x in node.args[0])
 
-    op = CompiledFunctionMaxOp(
-        create_max_graph,
-        create_max_graph.__name__,
-        CustomOpLibrary(KernelLibrary(mlir.Context())),
-        input_types=None,
-        output_types=None,
-        num_outputs=len(meta_outputs),
-        num_inputs=len(example_inputs),
-    )
-    custom_op_def = op.custom_op_def()
 
-    def equivalent_max_function(*args) -> torch.Tensor:
-        results = [torch.empty_like(x, device=args[0].device) for x in meta_outputs]
-        custom_op_def(*results, *args)
+class MaxCompiler:
+    def __init__(self, gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor]):
+        self.gm = gm
+        self.example_inputs = example_inputs
+        gm.graph.print_tabular()
+
+        # Use meta tensors (no memory allocation, no computation)
+        # Meta tensors only track shape/dtype/device metadata
+        meta_inputs = [torch.empty_like(inp, device="meta") for inp in example_inputs]
+        with torch.no_grad():
+            self.meta_outputs = gm(*meta_inputs)
+            if isinstance(self.meta_outputs, torch.Tensor):
+                self.meta_outputs = [self.meta_outputs]
+
+        op = CompiledFunctionMaxOp(
+            CustomOpFunction(gm),
+            "CustomOpFromTheCompiler",
+            CustomOpLibrary(KernelLibrary(mlir.Context())),
+            input_types=None,
+            output_types=None,
+            num_outputs=len(self.meta_outputs),
+            num_inputs=len(example_inputs),
+        )
+        self.custom_op_def = op.custom_op_def()
+
+    def __call__(self, *args):
+        results = [
+            torch.empty_like(x, device=args[0].device) for x in self.meta_outputs
+        ]
+        self.custom_op_def(*results, *args)
         return results
-
-    return equivalent_max_function
