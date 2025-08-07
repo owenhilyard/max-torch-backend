@@ -9,3 +9,6 @@ wheels/
 # Virtual environments
 .venv
 .vscode/settings.json
+
+pytorch/
+modular/
