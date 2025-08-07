@@ -66,7 +66,7 @@ class GraphFunction:
     ) -> tuple[max.graph.value.TensorValue, ...]:
         tensor_book = TensorsBook()
         args_index = 0
-        for node in self.gm.graph.nodes:
+        for node_idx, node in enumerate(self.gm.graph.nodes):
             if node.op == "placeholder":
                 if node.name.startswith("s"):
                     # shape input
@@ -81,11 +81,11 @@ class GraphFunction:
                 if node.target not in MAPPING_TORCH_TO_MOJO_FUNCTIONS:
                     if isinstance(node.target, str):
                         raise ValueError(
-                            f"Method torch.Tensor.{node.target} not supported by the Max backend yet."
+                            f"Failing at node {node_idx}. Method torch.Tensor.{node.target} not supported by the Max backend yet."
                         )
                     else:
                         raise ValueError(
-                            f"Function {get_fully_qualified_name(node.target)} not supported by the Max backend yet."
+                            f"Failing at node {node_idx}. Function {get_fully_qualified_name(node.target)} not supported by the Max backend yet."
                         )
                 tensor = MAPPING_TORCH_TO_MOJO_FUNCTIONS[node.target](
                     *func_args, **func_kwags
