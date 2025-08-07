@@ -28,6 +28,8 @@ class TensorsBook:
     def convert_to_max(self, something):
         if isinstance(something, torch.fx.Node):
             return self.tensors[something.name]
+        elif isinstance(something, str):
+            return something
         elif isinstance(something, int):
             return something
         elif isinstance(something, float):
