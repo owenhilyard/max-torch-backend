@@ -7,14 +7,17 @@ from torch._dynamo import mark_dynamic
 
 
 def check_functions_are_equivalent(
-    fn: Callable, device: str, inputs: list[torch.Tensor]
+    fn: Callable,
+    device: str | None,
+    inputs: list[torch.Tensor],
+    fn_compiled: Callable | None = None,
 ):
-    fn_compiled = torch.compile(backend=MaxCompiler)(fn)
+    fn_compiled = fn_compiled or torch.compile(backend=MaxCompiler)(fn)
+    if device is not None:
+        inputs = [input_tensor.to(device) for input_tensor in inputs]
 
-    inputs_on_device = [input_tensor.to(device) for input_tensor in inputs]
-
-    output_original = fn(*inputs_on_device)
-    output_compiled = fn_compiled(*inputs_on_device)
+    output_original = fn(*inputs)
+    output_compiled = fn_compiled(*inputs)
 
     assert type(output_original) == type(output_compiled)
 
@@ -468,18 +471,60 @@ def test_conv2d_combined_with_other_ops(device: str):
     check_functions_are_equivalent(fn, device, [x, w, b, y])
 
 
+class MaxCompilerCallCount:
+    def __init__(self):
+        self.call_count = 0
+
+    def __call__(self, *args, **kwargs):
+        self.call_count += 1
+        return MaxCompiler(*args, **kwargs)
+
+
 def test_dynamic_shapes(device: str):
+    """Testing the behavior with mark_dynamic()."""
+
     def fn(x, y):
         return x + y
 
-    a = torch.randn(5, 2)
-    b = torch.randn(2)
+    counter = MaxCompilerCallCount()
+    fn_compiled = torch.compile(backend=counter)(fn)
+
+    a = torch.randn(20, 2).to(device)
+    b = torch.randn(2).to(device)
 
     mark_dynamic(a, 0)
 
-    check_functions_are_equivalent(fn, device, [a, b])
+    check_functions_are_equivalent(fn, None, [a, b], fn_compiled)
 
-    a = torch.randn(3, 2)
-    b = torch.randn(2)
+    for i in range(5, 15):
+        a = torch.randn(i, 2).to(device)
+        b = torch.randn(2).to(device)
+        mark_dynamic(a, 0)
 
-    check_functions_are_equivalent(fn, device, [a, b])
+        check_functions_are_equivalent(fn, None, [a, b], fn_compiled)
+        # Ensure only one instance of the MaxCompiler is created
+    assert counter.call_count == 1
+
+
+def test_recompilation(device: str):
+    """Testing the behavior without mark_dynamic()."""
+
+    def fn(x, y):
+        return x + y
+
+    counter = MaxCompilerCallCount()
+    fn_compiled = torch.compile(backend=counter)(fn)
+
+    a = torch.randn(20, 2).to(device)
+    b = torch.randn(2).to(device)
+
+    check_functions_are_equivalent(fn, None, [a, b], fn_compiled)
+
+    a = torch.randn(10, 2).to(device)
+    b = torch.randn(2).to(device)
+
+    check_functions_are_equivalent(fn, None, [a, b], fn_compiled)
+    # Ensure a second instance of the MaxCompiler is created
+    assert counter.call_count == 2
+
+    # TODO: Make it work if called with more shapes (dynamo doesn't recompile)
