@@ -10,6 +10,10 @@ from .mappings import MAPPING_TORCH_TO_MOJO_FUNCTIONS
 import uuid
 
 
+def get_fully_qualified_name(func):
+    return f"{func.__module__}.{func.__qualname__}"
+
+
 def keep_only_tensors(inputs: list) -> list[torch.Tensor]:
     return [x for x in inputs if isinstance(x, torch.Tensor)]
 
@@ -28,6 +32,8 @@ class TensorsBook:
             return something
         elif isinstance(something, torch.fx.immutable_collections.immutable_list):
             return [self.convert_to_max(x) for x in something]
+        elif isinstance(something, tuple):
+            return tuple(self.convert_to_max(x) for x in something)
         raise ValueError(f"Unsupported type: {type(something)}")
 
 
@@ -54,7 +60,7 @@ class GraphFunction:
                 }
                 if node.target not in MAPPING_TORCH_TO_MOJO_FUNCTIONS:
                     raise ValueError(
-                        f"Function {node.target} not supported by the Max backend yet."
+                        f"Function {get_fully_qualified_name(node.target)} not supported by the Max backend yet."
                     )
                 tensor = MAPPING_TORCH_TO_MOJO_FUNCTIONS[node.target](
                     *func_args, **func_kwags
@@ -91,7 +97,7 @@ class MaxCompiler:
     def __init__(self, gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor]):
         self.gm = gm
         self.example_inputs = example_inputs
-        gm.graph.print_tabular()
+        # gm.graph.print_tabular()
 
         max_input_specs = generate_input_types(keep_only_tensors(example_inputs))
         with Graph("some_graph", input_types=max_input_specs) as graph:
