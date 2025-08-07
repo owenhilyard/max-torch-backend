@@ -99,7 +99,7 @@ def generate_input_types(
 
 class MaxCompiler:
     def __init__(
-        self, gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor], mode
+        self, gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor], mode=None
     ):
         self.gm = gm
         self.example_inputs = example_inputs
