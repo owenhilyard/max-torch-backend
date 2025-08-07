@@ -2,6 +2,7 @@ import torch
 from max import mlir
 from max.graph import KernelLibrary
 from max.torch.torch import CustomOpLibrary
+import max.graph.value
 
 from .mappings import MAPPING_TORCH_TO_MOJO_FUNCTIONS
 from .ops import CompiledFunctionMaxOp
@@ -28,7 +29,7 @@ class CustomOpFunction:
     def __init__(self, gm: torch.fx.GraphModule):
         self.gm = gm
 
-    def __call__(self, *args):
+    def __call__(self, *args: max.graph.value.TensorValue) -> tuple[max.graph.value.TensorValue, ...]:
         tensor_book = TensorsBook()
         args_index = 0
         for node in self.gm.graph.nodes:
@@ -77,7 +78,7 @@ class MaxCompiler:
         )
         self.custom_op_def = op.custom_op_def()
 
-    def __call__(self, *args):
+    def __call__(self, *args) -> list[torch.Tensor]:
         results = [
             torch.empty_like(x, device=args[0].device) for x in self.meta_outputs
         ]
