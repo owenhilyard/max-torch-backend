@@ -1,3 +1,3 @@
-from .compiler import MaxCompiler
+from .compiler import MaxCompiler, get_accelerators
 
 __all__ = ["MaxCompiler"]
