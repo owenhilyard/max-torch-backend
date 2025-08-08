@@ -24,7 +24,12 @@ def get_fully_qualified_name(func):
 
 
 def keep_only_tensors(inputs: list) -> list[torch.Tensor]:
-    return [x for x in inputs if isinstance(x, torch.Tensor)]
+    result = []
+    for x in inputs:
+        if isinstance(x, torch.Tensor):
+            # Detach tensors to avoid gradient tracking issues with DLpack
+            result.append(x.detach())
+    return result
 
 
 class TensorsBook:
@@ -57,12 +62,31 @@ class TensorsBook:
             return None
         elif something == ...:
             return ...
+        elif isinstance(something, torch.nn.Module):
+            # Handle module attributes that might be stored in tensor_book
+            return something
         raise ValueError(f"Unsupported type when reading the graph: {type(something)}")
 
 
 class GraphFunction:
     def __init__(self, gm: torch.fx.GraphModule):
         self.gm = gm
+
+    def fetch_attr(self, target: str):
+        """
+        Fetch an attribute from the Module hierarchy of self.gm.
+        Args:
+            target (str): The fully-qualified name of the attribute to fetch
+        """
+        target_atoms = target.split(".")
+        attr_itr = self.gm
+        for i, atom in enumerate(target_atoms):
+            if not hasattr(attr_itr, atom):
+                raise RuntimeError(
+                    f"Node referenced nonexistent target {'.'.join(target_atoms[: i + 1])}"
+                )
+            attr_itr = getattr(attr_itr, atom)
+        return attr_itr
 
     def __call__(
         self, *args: max.graph.value.TensorValue
@@ -94,6 +118,19 @@ class GraphFunction:
                     *func_args, **func_kwags
                 )
                 tensor_book[node.name] = tensor
+            elif node.op == "get_attr":
+                # Fetch the attribute from the module hierarchy
+                attr_value = self.fetch_attr(node.target)
+                # Convert tensor attributes to MAX tensors
+                if isinstance(attr_value, torch.Tensor):
+                    from max.graph import ops
+
+                    # Create a constant tensor in the MAX graph
+                    max_tensor = ops.constant(attr_value.detach().cpu().numpy())
+                    tensor_book[node.name] = max_tensor
+                else:
+                    # For non-tensor attributes, store as-is
+                    tensor_book[node.name] = attr_value
             elif node.op == "output":
                 return tuple(tensor_book.convert_to_max(x) for x in node.args[0])
             else:
