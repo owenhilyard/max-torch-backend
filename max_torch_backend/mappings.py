@@ -280,6 +280,18 @@ def torch_linear_equivalent(input, weight, bias=None):
     return result
 
 
+def torch_contiguous_equivalent(tensor):
+    return tensor
+
+
+def torch_view_equivalent(tensor, *shape):
+    if len(shape) == 1 and isinstance(shape[0], tuple | list):
+        target_shape = list(shape[0])
+    else:
+        target_shape = list(shape)
+    return max.graph.ops.reshape(tensor, target_shape)
+
+
 def torch_log_api_usage_once_equivalent(*args, **kwargs):
     """
     No-op function for torch._C.PyCapsule._log_api_usage_once.
@@ -310,6 +322,8 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     "expand": torch_expand_equivalent,
     "to": torch_to_equivalent,
     "transpose": torch_transpose_equivalent,
+    "view": torch_view_equivalent,
+    "contiguous": torch_contiguous_equivalent,
     "abs": max.graph.ops.abs,
     "cos": max.graph.ops.cos,
     "sin": max.graph.ops.sin,
