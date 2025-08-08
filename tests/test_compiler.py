@@ -2466,3 +2466,27 @@ def test_get_attr_simple_constant(device: str):
     assert "constant" in targets
 
     check_functions_are_equivalent(module, device, [x])
+
+
+def test_get_attr_torch_tensor(device: str):
+    class SimpleConstantModule(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.constant = torch.tensor([2.0, 3.0, 4.0]).to(device)
+
+        def forward(self, x):
+            # Simple addition that should create get_attr node
+            return x + self.constant
+
+    module = SimpleConstantModule().to(device)
+
+    x = torch.randn(3)
+
+    # Verify get_attr nodes are in the graph
+    traced = torch.fx.symbolic_trace(module)
+    get_attr_nodes = [node for node in traced.graph.nodes if node.op == "get_attr"]
+    assert len(get_attr_nodes) >= 1
+    targets = [node.target for node in get_attr_nodes]
+    assert "constant" in targets
+
+    check_functions_are_equivalent(module, device, [x])
