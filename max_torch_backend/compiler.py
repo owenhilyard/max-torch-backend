@@ -9,6 +9,7 @@ from max.driver import Accelerator, accelerator_count, CPU
 from .mappings import MAPPING_TORCH_TO_MOJO_FUNCTIONS
 import uuid
 import warnings
+from max.graph import ops
 
 
 def get_fully_qualified_name(func):
@@ -23,12 +24,13 @@ def get_fully_qualified_name(func):
     return result
 
 
-def keep_only_tensors(inputs: list) -> list[torch.Tensor]:
+def keep_only_tensors(inputs: list, detach: bool = False) -> list[torch.Tensor]:
     result = []
     for x in inputs:
         if isinstance(x, torch.Tensor):
-            # Detach tensors to avoid gradient tracking issues with DLpack
-            result.append(x.detach())
+            if detach:
+                x = x.detach()
+            result.append(x)
     return result
 
 
@@ -63,7 +65,6 @@ class TensorsBook:
         elif something == ...:
             return ...
         elif isinstance(something, torch.nn.Module):
-            # Handle module attributes that might be stored in tensor_book
             return something
         raise ValueError(f"Unsupported type when reading the graph: {type(something)}")
 
@@ -73,8 +74,7 @@ class GraphFunction:
         self.gm = gm
 
     def fetch_attr(self, target: str):
-        """
-        Fetch an attribute from the Module hierarchy of self.gm.
+        """Fetch an attribute from the Module hierarchy of self.gm.
         Args:
             target (str): The fully-qualified name of the attribute to fetch
         """
@@ -119,17 +119,12 @@ class GraphFunction:
                 )
                 tensor_book[node.name] = tensor
             elif node.op == "get_attr":
-                # Fetch the attribute from the module hierarchy
                 attr_value = self.fetch_attr(node.target)
-                # Convert tensor attributes to MAX tensors
                 if isinstance(attr_value, torch.Tensor):
-                    from max.graph import ops
-
-                    # Create a constant tensor in the MAX graph
+                    # TODO: Maybe we should stay on GPU?
                     max_tensor = ops.constant(attr_value.detach().cpu().numpy())
                     tensor_book[node.name] = max_tensor
                 else:
-                    # For non-tensor attributes, store as-is
                     tensor_book[node.name] = attr_value
             elif node.op == "output":
                 return tuple(tensor_book.convert_to_max(x) for x in node.args[0])
@@ -188,5 +183,6 @@ class MaxCompiler:
         self.model = session.load(graph)
 
     def __call__(self, *args) -> list[torch.Tensor]:
-        outputs = self.model.execute(*keep_only_tensors(args))
+        # Detach tensors to avoid gradient tracking issues with DLpack
+        outputs = self.model.execute(*keep_only_tensors(args, detach=True))
         return [torch.Tensor(x) for x in outputs]
