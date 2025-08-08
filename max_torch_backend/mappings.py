@@ -18,6 +18,7 @@ IDENTICAL_FUNCTIONS = [
     operator.mod,
     operator.getitem,
     operator.matmul,
+    operator.neg,
     torch.add,
     torch.sub,
     torch.mul,
