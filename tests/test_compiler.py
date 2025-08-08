@@ -944,6 +944,109 @@ def test_tensor_cos_sin_different_shapes(device: str, tensor_shapes: tuple):
     check_functions_are_equivalent(fn_sin, device, [x])
 
 
+def test_tensor_pow_method(device: str):
+    """Test tensor.pow() method"""
+
+    def fn(x, y):
+        return x.pow(y)
+
+    x = torch.randn(3, 4).abs() + 0.1  # Avoid negative base
+    y = torch.randn(3, 4) * 2  # Keep exponent reasonable
+
+    check_functions_are_equivalent(fn, device, [x, y])
+
+
+def test_tensor_pow_scalar_exponent(device: str):
+    """Test tensor.pow() with scalar exponent"""
+
+    def fn(x):
+        return x.pow(2)
+
+    x = torch.randn(3, 4)
+
+    check_functions_are_equivalent(fn, device, [x])
+
+
+def test_tensor_pow_negative_exponent(device: str):
+    """Test tensor.pow() with negative exponent"""
+
+    def fn(x):
+        return x.pow(-2)
+
+    x = torch.randn(3, 4).abs() + 1.0  # Avoid division by zero
+
+    check_functions_are_equivalent(fn, device, [x])
+
+
+def test_tensor_pow_fractional_exponent(device: str):
+    """Test tensor.pow() with fractional exponent"""
+
+    def fn(x):
+        return x.pow(0.5)  # Square root
+
+    x = torch.randn(3, 4).abs() + 0.1  # Ensure positive for square root
+
+    check_functions_are_equivalent(fn, device, [x])
+
+
+def test_tensor_pow_with_arithmetic(device: str):
+    """Test tensor.pow() combined with arithmetic operations"""
+
+    def fn(x, y, z):
+        return x.pow(y) + z
+
+    x = torch.randn(3, 4).abs() + 0.1
+    y = torch.randn(3, 4) * 2
+    z = torch.randn(3, 4)
+
+    check_functions_are_equivalent(fn, device, [x, y, z])
+
+
+def test_tensor_pow_chained(device: str):
+    """Test chained tensor.pow() operations"""
+
+    def fn(x):
+        return x.pow(2).pow(0.5)  # Should be approximately x
+
+    x = torch.randn(3, 4).abs() + 0.1
+
+    check_functions_are_equivalent(fn, device, [x])
+
+
+def test_tensor_pow_broadcast(device: str):
+    """Test tensor.pow() with broadcasting"""
+
+    def fn(x, y):
+        return x.pow(y)
+
+    x = torch.randn(3, 4).abs() + 0.1
+    y = torch.randn(1, 4) * 2
+
+    check_functions_are_equivalent(fn, device, [x, y])
+
+
+def test_tensor_pow_different_shapes(device: str, tensor_shapes: tuple):
+    """Test tensor.pow() with different tensor shapes"""
+
+    def fn(x):
+        return x.pow(2)
+
+    x = torch.randn(tensor_shapes)
+
+    check_functions_are_equivalent(fn, device, [x])
+
+
+def test_tensor_pow_with_other_methods(device: str):
+    """Test tensor.pow() combined with other tensor methods"""
+
+    def fn(x):
+        return x.transpose(0, 1).pow(2).cos()
+
+    x = torch.randn(3, 4)
+
+    check_functions_are_equivalent(fn, device, [x])
+
+
 def test_change_device_to_cpu(device: str):
     """Test changing device to CPU"""
 

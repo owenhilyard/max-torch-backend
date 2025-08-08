@@ -267,6 +267,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     "transpose": torch_transpose_equivalent,
     "cos": max.graph.ops.cos,
     "sin": max.graph.ops.sin,
+    "pow": operator.pow,
 }
 
 for func in IDENTICAL_FUNCTIONS:
