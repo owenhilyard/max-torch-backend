@@ -10,6 +10,7 @@ from .mappings import MAPPING_TORCH_TO_MOJO_FUNCTIONS
 import uuid
 import warnings
 
+
 def get_fully_qualified_name(func):
     result = ""
     if hasattr(func, "__module__"):
@@ -127,9 +128,7 @@ def get_accelerators():
             try:
                 yield Accelerator(i)
             except ValueError as e:
-                warnings.warn(
-                    f"Failed to create accelerator {i}. {e}"
-                )
+                warnings.warn(f"Failed to create accelerator {i}. {e}")
 
 
 class MaxCompiler:
@@ -146,9 +145,7 @@ class MaxCompiler:
             outputs = GraphFunction(self.gm)(*graph.inputs)
             graph.output(*outputs)
 
-        session = engine.InferenceSession(
-            devices=list(get_accelerators())
-        )
+        session = engine.InferenceSession(devices=list(get_accelerators()))
         self.model = session.load(graph)
 
     def __call__(self, *args) -> list[torch.Tensor]:

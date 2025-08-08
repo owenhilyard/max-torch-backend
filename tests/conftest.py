@@ -1,7 +1,7 @@
 import pytest
 import torch
-from max.driver import accelerator_count
 from max_torch_backend import get_accelerators
+
 
 @pytest.fixture(params=["cpu", "cuda"])
 def device(request, gpu_available: bool):
