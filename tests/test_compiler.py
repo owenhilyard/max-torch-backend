@@ -4,6 +4,8 @@ from collections.abc import Callable
 from max_torch_backend import MaxCompiler
 import pytest
 from torch._dynamo import mark_dynamic
+import io
+from unittest.mock import patch
 
 
 def check_functions_are_equivalent(
@@ -2497,6 +2499,134 @@ def test_get_attr_torch_tensor(device: str):
     assert "constant" in targets
 
     check_functions_are_equivalent(module, device, [x])
+
+
+# Graph Break Tests
+def test_graph_break_with_print(device: str):
+    """Test graph break caused by print statements"""
+
+    def fn_with_print(x):
+        a = x + 1
+        print(f"Processing tensor with shape: {x.shape}")
+        return a * 2
+
+    x = torch.randn(3, 4)
+    explanation = torch._dynamo.explain(fn_with_print)(x)
+    assert explanation.graph_break_count == 1
+    assert explanation.graph_count == 2
+
+    # This should cause a graph break due to print
+    with patch("sys.stdout", new_callable=io.StringIO):
+        check_functions_are_equivalent(fn_with_print, device, [x])
+
+
+def test_graph_break_with_item_access(device: str):
+    def fn_with_item(x):
+        x = x * x
+        if x[0, 0] > 0:
+            return x * 2
+        else:
+            return x
+
+    x = torch.randn(2, 3) + 1.0  # Ensure non-zero values
+    explanation = torch._dynamo.explain(fn_with_item)(x)
+    assert explanation.graph_break_count == 1
+    assert explanation.graph_count == 2
+    check_functions_are_equivalent(fn_with_item, device, [x])
+
+
+def test_graph_break_with_python_loop_over_tensor(device: str):
+    """Test graph break caused by Python loops over tensor elements"""
+
+    def fn_with_python_loop(x):
+        x = x * x
+        # Python iteration over tensor shapes causes graph breaks
+        result = x
+        for i in range(int(x[0, 0])):  # This will cause graph break
+            result = result * (i + 1)
+        return result
+
+    x = torch.randint(1, 3, (3, 2)).to(torch.float32)
+    explanation = torch._dynamo.explain(fn_with_python_loop)(x)
+    assert explanation.graph_break_count == 1
+    assert explanation.graph_count == 2
+    check_functions_are_equivalent(fn_with_python_loop, device, [x])
+
+
+@pytest.mark.xfail(reason="FIXME: dtype issue")
+def test_graph_break_with_python_loop_over_tensor_complexe_dtypes(device: str):
+    """Test graph break caused by Python loops over tensor elements"""
+
+    def fn_with_python_loop(x):
+        x = x * x
+        result = x
+        for i in range(int(x[0, 0])):  # This will cause graph break
+            result = (result * (i + 1)).to(torch.int32)
+        return result
+
+    x = torch.randint(1, 3, (3, 2)).to(torch.int32)
+    explanation = torch._dynamo.explain(fn_with_python_loop)(x)
+    assert explanation.graph_break_count == 1
+    assert explanation.graph_count == 2
+    check_functions_are_equivalent(fn_with_python_loop, device, [x])
+
+
+def test_graph_break_with_string_operations(device: str):
+    """Test graph break caused by string operations"""
+
+    def fn_with_string_ops(x):
+        x = x * 2
+        tensor_info = f"Tensor shape: {x}, dtype: {x.dtype}"
+        # Just return the tensor since we can't return strings
+        return x * (len(tensor_info) % 10)
+
+    x = torch.randn(2, 3)
+    explanation = torch._dynamo.explain(fn_with_string_ops)(x)
+    assert explanation.graph_break_count == 1
+    assert explanation.graph_count == 2
+    # This should cause graph breaks due to string operations
+    check_functions_are_equivalent(fn_with_string_ops, device, [x])
+
+
+def test_multiple_graph_breaks_in_sequence(device: str):
+    """Test function with multiple operations that cause graph breaks"""
+
+    def fn_with_multiple_breaks(x):
+        # First graph break: print
+        x = x * x
+        print(f"Input shape: {x.shape}")
+
+        x = x + 1
+
+        print(f"Result computed {x.shape}")
+
+        return x * x
+
+    x = torch.randn(2, 3)
+    explanation = torch._dynamo.explain(fn_with_multiple_breaks)(x)
+    assert explanation.graph_break_count == 2
+    assert explanation.graph_count == 3
+
+    with patch("sys.stdout", new_callable=io.StringIO):
+        check_functions_are_equivalent(fn_with_multiple_breaks, device, [x])
+
+
+def test_no_graph_breaks_with_supported_operations(device: str):
+    def well_supported_fn(x, y):
+        # Only use operations that should be well supported
+        z = x + y
+        z = torch.sin(z)
+        z = torch.cos(z)
+        z = z * 2
+        z = torch.abs(z)
+        return z
+
+    x = torch.randn(3, 4)
+    y = torch.randn(3, 4)
+    explanation = torch._dynamo.explain(well_supported_fn)(x, y)
+    assert explanation.graph_break_count == 0
+    assert explanation.graph_count == 1
+    check_functions_are_equivalent(well_supported_fn, device, [x, y])
 
 
 def test_max_pool2d_basic(device: str):
