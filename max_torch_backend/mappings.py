@@ -668,6 +668,29 @@ def torch_arange_equivalent(
     return max_ops.range(start, end, step, out_dim=out_dim, device=device, dtype=dtype)
 
 
+def torch_new_ones_equivalent(
+    input: max_ops.TensorType,
+    size: tuple,
+    *,
+    dtype=None,
+    device=None,
+    requires_grad=False,
+    layout=torch.strided,
+    pin_memory=False,
+):
+    if dtype is None:
+        dtype = input.dtype
+    else:
+        dtype = DType.from_torch(dtype)
+
+    if device is None:
+        device = input.device
+    else:
+        device = max_device_ref(device)
+
+    return max_ops.constant(np.ones(size), dtype=dtype, device=device)
+
+
 def no_op(*args, **kwargs):
     pass
 
@@ -770,6 +793,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     "split": torch_split_equivalent,
     "max": max_ops.max,
     "min": max_ops.min,
+    "new_ones": torch_new_ones_equivalent,
 }
 
 for func in IDENTICAL_FUNCTIONS:

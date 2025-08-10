@@ -59,6 +59,33 @@ def test_iadd(device: str):
     check_functions_are_equivalent(fn, device, [a, b])
 
 
+def test_new_ones(device: str):
+    def fn(x):
+        return x.new_ones((3, 3))
+
+    a = torch.randn(3)
+
+    check_functions_are_equivalent(fn, device, [a])
+
+
+def test_new_ones_device(device: str):
+    def fn(x):
+        return x.new_ones((3, 3), device=torch.device(device))
+
+    a = torch.randn(3)
+
+    check_functions_are_equivalent(fn, "cpu", [a])
+
+
+def test_new_ones_dtype(device: str):
+    def fn(x):
+        return x.new_ones((3, 3), dtype=torch.uint8)
+
+    a = torch.randn(3)
+
+    check_functions_are_equivalent(fn, device, [a])
+
+
 def test_operator_add(device: str, tensor_shapes: tuple):
     def fn(x, y):
         return x + y
