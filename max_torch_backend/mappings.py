@@ -452,6 +452,42 @@ def torch_split_equivalent(
     return max_ops.split(input, new_split_size, dim)
 
 
+def torch_amax_equivalent(input, dim, keepdim=False, *, out=None):
+    # If only input is provided, we find the maximum along the specified dimension
+    if dim is None:
+        dim = [i for i in range(len(input.shape))]
+    elif isinstance(dim, int):
+        dim = [dim]
+
+    # Similar to mean, we can only reduce dimensions one at a time
+    result = input
+    for axis in dim:
+        result = max_ops.max(result, axis=axis)
+    if not keepdim:
+        # Squeeze the reduced dimensions
+        for axis in sorted(dim, reverse=True):
+            result = max_ops.squeeze(result, axis=axis)
+    return result
+
+
+def torch_amin_equivalent(input, dim, keepdim=False, *, out=None):
+    # If only input is provided, we find the minimum along the specified dimension
+    if dim is None:
+        dim = [i for i in range(len(input.shape))]
+    elif isinstance(dim, int):
+        dim = [dim]
+
+    # Similar to mean, we can only reduce dimensions one at a time
+    result = input
+    for axis in dim:
+        result = max_ops.min(result, axis=axis)
+    if not keepdim:
+        # Squeeze the reduced dimensions
+        for axis in sorted(dim, reverse=True):
+            result = max_ops.squeeze(result, axis=axis)
+    return result
+
+
 MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     torch.abs: max_ops.abs,
     torch.cos: max_ops.cos,
@@ -475,7 +511,9 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     torch._C._log_api_usage_once: torch_log_api_usage_once_equivalent,
     torch.tril: torch_tril_equivalent,
     torch.split: torch_split_equivalent,
+    torch.amax: torch_amax_equivalent,
     torch.maximum: max_ops.max,
+    torch.amin: torch_amin_equivalent,
     torch.minimum: max_ops.min,
     # methods are given as strings in the graph
     "float": torch_float_equivalent,

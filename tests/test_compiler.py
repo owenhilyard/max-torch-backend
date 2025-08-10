@@ -155,6 +155,34 @@ def test_builtin_min_max(device: str, func):
     check_functions_are_equivalent(fn, device, [a])
 
 
+@pytest.mark.parametrize("keepdim", [True, False])
+@pytest.mark.parametrize("func", [torch.amin, torch.amax])
+@pytest.mark.parametrize(
+    "shapes,dims",
+    [
+        ((3, 4), (0,)),
+        ((5, 6, 2), (0, 2)),
+        ((8,), (0,)),
+        ((2, 3, 4), (-1,)),
+        ((2, 3, 4), -1),
+        ((2, 3, 4), None),
+    ],
+)
+def test_torch_amin_amax_single_element_options(
+    device: str, shapes, dims, keepdim, func
+):
+    """Only works with a single element."""
+    if device == "cuda":
+        pytest.xfail("ValueError: GPU reduction currently limited to inner axis.")
+
+    def fn(x):
+        return func(x, dim=dims, keepdim=keepdim)
+
+    a = torch.randn(shapes)
+
+    check_functions_are_equivalent(fn, device, [a])
+
+
 @pytest.mark.parametrize("func", [torch.minimum, torch.maximum])
 def test_minimum_maximum(device: str, tensor_shapes: tuple, func):
     """Only works with elementwise min/max of two tensors."""
