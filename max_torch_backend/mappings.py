@@ -1,6 +1,5 @@
 import operator
 
-import max.graph.ops
 import max.graph.ops as max_ops
 import torch
 import torch.nn.functional as F
@@ -8,6 +7,8 @@ import torch.amp.autocast_mode
 from max.graph.type import DeviceRef
 from max.torch.torch import max_device_ref
 from max.dtype import DType
+from max.graph import StaticDim
+import max.graph.type as max_type
 import numpy as np
 
 # Import specific function objects that appear in VGG FX graph
@@ -42,11 +43,13 @@ IDENTICAL_FUNCTIONS = [
     torch.pow,
     torch.remainder,
     str,
+    max,
+    min,
 ]
 
 
 def torch_cat_equivalent(tensors: list, dim=0):
-    return max.graph.ops.concat(tensors, axis=dim)
+    return max_ops.concat(tensors, axis=dim)
 
 
 def torch_conv2d_equivalent(
@@ -75,15 +78,15 @@ def torch_conv2d_equivalent(
     # to MAX RSCF: [kernel_h, kernel_w, in_channels, out_channels]
     weight_rscf = weight.permute([2, 3, 1, 0])
 
-    result = max.graph.ops.conv2d(
+    result = max_ops.conv2d(
         input_nhwc,
         weight_rscf,
         bias=bias,
         stride=stride,
         padding=padding,
         dilation=dilation,
-        input_layout=max.graph.type.ConvInputLayout.NHWC,
-        filter_layout=max.graph.type.FilterLayout.RSCF,
+        input_layout=max_type.ConvInputLayout.NHWC,
+        filter_layout=max_type.FilterLayout.RSCF,
     )
 
     # Convert result back from NHWC to NCHW for PyTorch compatibility
@@ -121,14 +124,14 @@ def torch_embedding_equivalent(
     # but MAX gather may need proper shape handling
     original_shape = input.shape
     if len(original_shape) == 0:  # Scalar tensor
-        input_reshaped = max.graph.ops.unsqueeze(input, axis=0)
-        result = max.graph.ops.gather(weight, input_reshaped, axis=0)
+        input_reshaped = max_ops.unsqueeze(input, axis=0)
+        result = max_ops.gather(weight, input_reshaped, axis=0)
         # Remove the added dimension: [1, embedding_dim] -> [embedding_dim]
-        return max.graph.ops.squeeze(result, axis=0)
+        return max_ops.squeeze(result, axis=0)
     else:
         # Use gather to select rows from weight matrix based on input indices
         # axis=0 means we're gathering along the first dimension (vocab dimension)
-        return max.graph.ops.gather(weight, input, axis=0)
+        return max_ops.gather(weight, input, axis=0)
 
 
 def torch_autocast_equivalent(*args, **kwargs):
@@ -136,7 +139,7 @@ def torch_autocast_equivalent(*args, **kwargs):
 
 
 def torch_float_equivalent(tensor):
-    return max.graph.ops.cast(tensor, dtype=max.graph.type.DType.float32)
+    return max_ops.cast(tensor, dtype=max_type.DType.float32)
 
 
 def torch_expand_equivalent(tensor, *size):
@@ -166,7 +169,7 @@ def torch_expand_equivalent(tensor, *size):
         else:
             target_shape.append(dim_size)
 
-    return max.graph.ops.broadcast_to(tensor, target_shape)
+    return max_ops.broadcast_to(tensor, target_shape)
 
 
 def torch_to_equivalent(tensor, *args, **kwargs):
@@ -212,9 +215,9 @@ def torch_to_equivalent(tensor, *args, **kwargs):
 
     result = tensor
     if device is not None:
-        result = max.graph.ops.transfer_to(result, device=device)
+        result = max_ops.transfer_to(result, device=device)
     if dtype is not None:
-        result = max.graph.ops.cast(result, dtype=dtype)
+        result = max_ops.cast(result, dtype=dtype)
     if device is None and dtype is None:
         raise ValueError(
             "Either 'device' or 'dtype' must be specified for torch.to equivalent."
@@ -250,13 +253,13 @@ def torch_transpose_equivalent(tensor, dim0, dim1):
     perm = list(range(ndim))
     perm[dim0], perm[dim1] = perm[dim1], perm[dim0]
 
-    return max.graph.ops.permute(tensor, perm)
+    return max_ops.permute(tensor, perm)
 
 
 def torch_mean_equivalent(input, dim=None, keepdim=False, *, dtype=None):
     if dtype is not None:
         max_dtype = DType.from_torch(dtype)
-        input = max.graph.ops.cast(input, dtype=max_dtype)
+        input = max_ops.cast(input, dtype=max_dtype)
 
     result = input
 
@@ -270,7 +273,7 @@ def torch_mean_equivalent(input, dim=None, keepdim=False, *, dtype=None):
     # Multiple dimensions reduction - reduce each dimension one by one
     # Sort dimensions in descending order to avoid index shifting issues
     for axis in dim:
-        result = max.graph.ops.mean(result, axis=axis)
+        result = max_ops.mean(result, axis=axis)
 
     # Handle keepdim=False - MAX's mean keeps dimensions by default, so we need to squeeze
     if not keepdim:
@@ -278,14 +281,14 @@ def torch_mean_equivalent(input, dim=None, keepdim=False, *, dtype=None):
         # Sort original dimensions and squeeze from highest to lowest
         dims_to_squeeze = sorted(dim, reverse=True)
         for axis in dims_to_squeeze:
-            result = max.graph.ops.squeeze(result, axis=axis)
+            result = max_ops.squeeze(result, axis=axis)
 
     return result
 
 
 def torch_linear_equivalent(input, weight, bias=None):
-    weight_t = max.graph.ops.permute(weight, [1, 0])  # Transpose weight
-    result = max.graph.ops.matmul(input, weight_t)
+    weight_t = max_ops.permute(weight, [1, 0])  # Transpose weight
+    result = max_ops.matmul(input, weight_t)
 
     if bias is not None:
         result = result + bias
@@ -302,11 +305,11 @@ def torch_view_equivalent(tensor, *shape):
         target_shape = list(shape[0])
     else:
         target_shape = list(shape)
-    return max.graph.ops.reshape(tensor, target_shape)
+    return max_ops.reshape(tensor, target_shape)
 
 
 def torch_unsqueeze_equivalent(tensor, dim):
-    return max.graph.ops.unsqueeze(tensor, axis=dim)
+    return max_ops.unsqueeze(tensor, axis=dim)
 
 
 def torch_log_api_usage_once_equivalent(*args, **kwargs):
@@ -320,7 +323,7 @@ def torch_log_api_usage_once_equivalent(*args, **kwargs):
 
 def relu_equivalent(tensor, inplace: bool = False):
     # inplace has no meaning in max since it's graph-based
-    return max.graph.ops.relu(tensor)
+    return max_ops.relu(tensor)
 
 
 def torch_max_pool2d_equivalent(
@@ -350,7 +353,7 @@ def torch_max_pool2d_equivalent(
     # Convert input from NCHW (PyTorch default) to NHWC (MAX requirement)
     input_nhwc = input.permute([0, 2, 3, 1])
 
-    result = max.graph.ops.max_pool2d(
+    result = max_ops.max_pool2d(
         input_nhwc,
         kernel_size=kernel_size,
         stride=stride,
@@ -388,7 +391,7 @@ def torch_adaptive_avg_pool2d_equivalent(input, output_size):
         # Convert input from NCHW to NHWC for MAX
         input_nhwc = input.permute([0, 2, 3, 1])
 
-        result = max.graph.ops.avg_pool2d(
+        result = max_ops.avg_pool2d(
             input_nhwc,
             kernel_size=(kernel_h, kernel_w),
             stride=(stride_h, stride_w),
@@ -402,7 +405,7 @@ def torch_adaptive_avg_pool2d_equivalent(input, output_size):
 
 
 def torch_flatten_equivalent(input, start_dim=1, end_dim=-1):
-    return max.graph.ops.flatten(input, start_dim=start_dim, end_dim=end_dim)
+    return max_ops.flatten(input, start_dim=start_dim, end_dim=end_dim)
 
 
 def torch_dropout_equivalent(input, p=0.5, training=True, inplace=False):
@@ -418,7 +421,7 @@ def torch_tril_equivalent(input: max_ops.TensorType, diagonal: int = 0, *, out=N
     shape = input.shape
 
     for i in range(len(shape)):
-        if not isinstance(shape[i], max.graph.StaticDim):
+        if not isinstance(shape[i], StaticDim):
             raise ValueError(f"Input dims must be static, got shape {shape}")
 
     shape_ints = [int(dim) for dim in shape]
@@ -433,7 +436,7 @@ def torch_tril_equivalent(input: max_ops.TensorType, diagonal: int = 0, *, out=N
 def torch_type_as_equivalent(
     input: max_ops.TensorType, other: max_ops.TensorType
 ) -> max_ops.TensorType:
-    return max.graph.ops.cast(input, dtype=other.dtype)
+    return max_ops.cast(input, dtype=other.dtype)
 
 
 def torch_split_equivalent(
@@ -450,11 +453,11 @@ def torch_split_equivalent(
 
 
 MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
-    torch.abs: max.graph.ops.abs,
-    torch.cos: max.graph.ops.cos,
-    torch.sin: max.graph.ops.sin,
-    torch.rsqrt: max.graph.ops.rsqrt,
-    torch.sqrt: max.graph.ops.sqrt,
+    torch.abs: max_ops.abs,
+    torch.cos: max_ops.cos,
+    torch.sin: max_ops.sin,
+    torch.rsqrt: max_ops.rsqrt,
+    torch.sqrt: max_ops.sqrt,
     torch.mean: torch_mean_equivalent,
     torch.cat: torch_cat_equivalent,
     F.conv2d: torch_conv2d_equivalent,
@@ -464,17 +467,16 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     F.max_pool2d: torch_max_pool2d_equivalent,
     F.adaptive_avg_pool2d: torch_adaptive_avg_pool2d_equivalent,
     F.dropout: torch_dropout_equivalent,
-    # torch._C._nn.conv2d: torch_conv2d_equivalent,  # This attribute doesn't exist
     torch._C._nn.linear: torch_linear_equivalent,
-    # VGG-specific function object mappings for built-ins
-    # torch._C.flatten: torch_flatten_equivalent,  # Need to find correct reference
-    torch.flatten: torch_flatten_equivalent,  # alternative flatten reference
+    torch.flatten: torch_flatten_equivalent,
     # TODO: Use noop function
     torch.amp.autocast_mode._enter_autocast: torch_autocast_equivalent,
     torch.amp.autocast_mode._exit_autocast: torch_autocast_equivalent,
     torch._C._log_api_usage_once: torch_log_api_usage_once_equivalent,
     torch.tril: torch_tril_equivalent,
     torch.split: torch_split_equivalent,
+    torch.maximum: max_ops.max,
+    torch.minimum: max_ops.min,
     # methods are given as strings in the graph
     "float": torch_float_equivalent,
     "expand": torch_expand_equivalent,
@@ -484,27 +486,19 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     "contiguous": torch_contiguous_equivalent,
     "unsqueeze": torch_unsqueeze_equivalent,
     "flatten": torch_flatten_equivalent,
-    "abs": max.graph.ops.abs,
-    "cos": max.graph.ops.cos,
-    "sin": max.graph.ops.sin,
-    "sqrt": max.graph.ops.sqrt,
-    "rsqrt": max.graph.ops.rsqrt,
+    "abs": max_ops.abs,
+    "cos": max_ops.cos,
+    "sin": max_ops.sin,
+    "sqrt": max_ops.sqrt,
+    "rsqrt": max_ops.rsqrt,
     "pow": operator.pow,
     "mean": torch_mean_equivalent,
     "tril": torch_tril_equivalent,
     "type_as": torch_type_as_equivalent,
     "split": torch_split_equivalent,
+    "max": max_ops.max,
+    "min": max_ops.min,
 }
-
-# Add the exact function objects that appear in VGG FX graph
-MAPPING_TORCH_TO_MOJO_FUNCTIONS.update(
-    {
-        torch.nn.functional.max_pool2d: torch_max_pool2d_equivalent,  # boolean_dispatch function
-        torch.nn.functional.relu: relu_equivalent,  # <function relu at 0x...>
-        torch.nn.functional.adaptive_avg_pool2d: torch_adaptive_avg_pool2d_equivalent,  # <function adaptive_avg_pool2d at 0x...>
-        torch.nn.functional.dropout: torch_dropout_equivalent,  # <function dropout at 0x...>
-    }
-)
 
 for func in IDENTICAL_FUNCTIONS:
     MAPPING_TORCH_TO_MOJO_FUNCTIONS[func] = func
