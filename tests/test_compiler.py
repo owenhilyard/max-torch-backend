@@ -20,8 +20,10 @@ def check_functions_are_equivalent(
     if device is not None:
         inputs = [input_tensor.to(device) for input_tensor in inputs]
 
-    output_original = fn(*inputs)
+    # We use the compiled first because compiled never changes
+    # the input tensors, while the original function might.
     output_compiled = fn_compiled(*inputs)
+    output_original = fn(*inputs)
 
     assert type(output_original) == type(output_compiled)
 
@@ -39,6 +41,17 @@ def check_functions_are_equivalent(
 def test_basic_addition(device: str):
     def fn(x, y):
         return x + y
+
+    a = torch.randn(3)
+    b = torch.randn(3)
+
+    check_functions_are_equivalent(fn, device, [a, b])
+
+
+def test_iadd(device: str):
+    def fn(x, y):
+        x += y
+        return x
 
     a = torch.randn(3)
     b = torch.randn(3)

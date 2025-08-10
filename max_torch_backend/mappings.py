@@ -666,6 +666,10 @@ def torch_arange_equivalent(
     return max_ops.range(start, end, step, out_dim=out_dim, device=device, dtype=dtype)
 
 
+def torch_iadd_equivalent(input, other):
+    return input + other
+
+
 IDENTICAL_FUNCTIONS = [
     operator.add,
     operator.sub,
@@ -686,6 +690,12 @@ IDENTICAL_FUNCTIONS = [
     operator.and_,
     operator.or_,
     operator.xor,
+    operator.iadd,
+    operator.isub,
+    operator.imul,
+    operator.ifloordiv,
+    operator.ipow,
+    operator.imod,
     torch.add,
     torch.sub,
     torch.mul,
