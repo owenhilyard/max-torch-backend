@@ -13,6 +13,10 @@ import warnings
 from max.graph import DeviceRef
 
 
+class MaxCompilerError(Exception):
+    pass
+
+
 def get_fully_qualified_name(func):
     result = ""
     if hasattr(func, "__module__"):
@@ -103,7 +107,7 @@ class GraphFunction:
                 args_index += 1
             elif node.op in ("call_function", "call_method"):
                 func_args = [tensor_book.convert_to_max(x) for x in node.args]
-                func_kwags = {
+                func_kwargs = {
                     k: tensor_book.convert_to_max(v) for k, v in node.kwargs.items()
                 }
                 if node.target not in MAPPING_TORCH_TO_MOJO_FUNCTIONS:
@@ -115,9 +119,15 @@ class GraphFunction:
                         raise ValueError(
                             f"Failing at node {node_idx}. Function {get_fully_qualified_name(node.target)} not supported by the Max backend yet."
                         )
-                tensor = MAPPING_TORCH_TO_MOJO_FUNCTIONS[node.target](
-                    *func_args, **func_kwags
-                )
+                try:
+                    tensor = MAPPING_TORCH_TO_MOJO_FUNCTIONS[node.target](
+                        *func_args, **func_kwargs
+                    )
+                except Exception as e:
+                    raise MaxCompilerError(
+                        f"Failed to execute node {node_idx} with target {get_fully_qualified_name(node.target)}, "
+                        f"inputs were: args={func_args}, kwargs={func_kwargs}. Error: {e}"
+                    ) from e
                 tensor_book[node.name] = tensor
             elif node.op == "get_attr":
                 attr_value = self.fetch_attr(node.target)
