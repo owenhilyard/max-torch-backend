@@ -53,6 +53,10 @@ def torch_cat_equivalent(tensors: list, dim=0):
     return max_ops.concat(tensors, axis=dim)
 
 
+def torch_stack_equivalent(tensors: list, dim=0):
+    return max_ops.stack(tensors, axis=dim)
+
+
 def torch_conv2d_equivalent(
     input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1
 ):
@@ -728,6 +732,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     torch.clamp: torch_clamp_equivalent,
     torch.arange: torch_arange_equivalent,
     torch.outer: max_ops.outer,
+    torch.stack: torch_stack_equivalent,
     # methods are given as strings in the graph
     "float": torch_float_equivalent,
     "expand": torch_expand_equivalent,
