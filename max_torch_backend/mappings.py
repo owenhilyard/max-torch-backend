@@ -11,6 +11,8 @@ from max.graph import StaticDim
 import max.graph.type as max_type
 import numpy as np
 import math
+import torch._functorch.vmap
+import torch._C._functorch
 
 # Import specific function objects that appear in VGG FX graph
 import torch._C._nn  # for conv2d and linear built-ins
@@ -666,8 +668,8 @@ def torch_arange_equivalent(
     return max_ops.range(start, end, step, out_dim=out_dim, device=device, dtype=dtype)
 
 
-def torch_iadd_equivalent(input, other):
-    return input + other
+def no_op(*args, **kwargs):
+    pass
 
 
 IDENTICAL_FUNCTIONS = [
@@ -730,6 +732,9 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     torch.amp.autocast_mode._enter_autocast: torch_autocast_equivalent,
     torch.amp.autocast_mode._exit_autocast: torch_autocast_equivalent,
     torch._C._log_api_usage_once: torch_log_api_usage_once_equivalent,
+    torch._functorch.vmap.lazy_load_decompositions: no_op,
+    torch._C._functorch._vmap_increment_nesting: no_op,
+    torch._C._functorch._add_batch_dim: no_op,
     torch.tril: torch_tril_equivalent,
     torch.split: torch_split_equivalent,
     torch.amax: torch_amax_equivalent,
