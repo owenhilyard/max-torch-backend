@@ -18,6 +18,8 @@ class MaxCompilerError(Exception):
 
 
 def get_fully_qualified_name(func):
+    if isinstance(func, str):
+        return f"torch.Tensor.{func}"
     result = ""
     if hasattr(func, "__module__"):
         result += func.__module__ + "."
@@ -111,14 +113,9 @@ class GraphFunction:
                     k: tensor_book.convert_to_max(v) for k, v in node.kwargs.items()
                 }
                 if node.target not in MAPPING_TORCH_TO_MOJO_FUNCTIONS:
-                    if isinstance(node.target, str):
-                        raise ValueError(
-                            f"Failing at node {node_idx}. Method torch.Tensor.{node.target} not supported by the Max backend yet."
-                        )
-                    else:
-                        raise ValueError(
-                            f"Failing at node {node_idx}. Function {get_fully_qualified_name(node.target)} not supported by the Max backend yet."
-                        )
+                    raise ValueError(
+                        f"Failing at node {node_idx}. Function {get_fully_qualified_name(node.target)}  not supported by the Max backend yet."
+                    )
                 try:
                     tensor = MAPPING_TORCH_TO_MOJO_FUNCTIONS[node.target](
                         *func_args, **func_kwargs
