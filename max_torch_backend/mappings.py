@@ -10,6 +10,7 @@ from max.dtype import DType
 from max.graph import StaticDim
 import max.graph.type as max_type
 import numpy as np
+import math
 
 # Import specific function objects that appear in VGG FX graph
 import torch._C._nn  # for conv2d and linear built-ins
@@ -653,6 +654,46 @@ def torch_clamp_equivalent(input, min=None, max=None, *, out=None):
     return result
 
 
+def torch_arange_equivalent(
+    start,
+    end=None,
+    step=1,
+    *,
+    out=None,
+    dtype=None,
+    layout=torch.strided,
+    device=None,
+    requires_grad=False,
+):
+    if dtype is None:
+        # Default dtype inference like PyTorch:
+        # If any of start, end, step are float, use float32
+        # Otherwise use int64
+        if any(isinstance(x, float) for x in [start, end, step]):
+            dtype = torch.float32
+        else:
+            dtype = torch.int64
+    dtype = DType.from_torch(dtype)
+
+    if device is None:
+        device = torch.get_default_device()
+    device = max_device_ref(device)
+
+    if end is None:
+        # Single argument form: torch.arange(end)
+        end = start
+        start = 0
+
+    # Calculate output dimension for max_ops.range
+    # The length is ceil((end - start) / step) as per PyTorch docs
+
+    out_length = math.ceil((end - start) / step)
+    out_dim = int(out_length)  # Convert to integer for MAX
+
+    # Use max_ops.range to create the sequence
+    return max_ops.range(start, end, step, out_dim=out_dim, device=device, dtype=dtype)
+
+
 MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     torch.abs: max_ops.abs,
     torch.cos: max_ops.cos,
@@ -685,6 +726,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     torch.max: torch_max_equivalent,
     torch.min: torch_min_equivalent,
     torch.clamp: torch_clamp_equivalent,
+    torch.arange: torch_arange_equivalent,
     # methods are given as strings in the graph
     "float": torch_float_equivalent,
     "expand": torch_expand_equivalent,

@@ -3269,3 +3269,73 @@ def test_torch_clamp_edge_cases(device: str):
 
     check_functions_are_equivalent(fn_identical_bounds, device, [a])
     check_functions_are_equivalent(fn_inverted_bounds, device, [a])
+
+
+def test_torch_arange_single_arg_int(device: str):
+    def fn():
+        return torch.arange(5, device=torch.device(device))
+
+    check_functions_are_equivalent(fn, device, [])
+
+
+def test_torch_arange_single_arg_float(device: str):
+    def fn():
+        return torch.arange(5.0, device=torch.device(device))
+
+    check_functions_are_equivalent(fn, device, [])
+
+
+def test_torch_arange_two_args(device: str):
+    def fn():
+        return torch.arange(1, 8, device=torch.device(device))
+
+    check_functions_are_equivalent(fn, device, [])
+
+
+def test_torch_arange_two_args_negative(device: str):
+    def fn():
+        return torch.arange(-3, 2, device=torch.device(device))
+
+    check_functions_are_equivalent(fn, device, [])
+
+
+def test_torch_arange_three_args(device: str):
+    def fn():
+        return torch.arange(0, 10, 2, device=torch.device(device))
+
+    check_functions_are_equivalent(fn, device, [])
+
+
+def test_torch_arange_three_args_float(device: str):
+    def fn():
+        return torch.arange(0.0, 3.0, 0.5, device=torch.device(device))
+
+    check_functions_are_equivalent(fn, device, [])
+
+
+def test_torch_arange_negative_step(device: str):
+    def fn():
+        return torch.arange(10, 0, -1, device=torch.device(device))
+
+    check_functions_are_equivalent(fn, device, [])
+
+
+def test_torch_arange_negative_step_invert_bounds(device: str):
+    def fn():
+        return torch.arange(10, 0, -1, device=torch.device(device))
+
+    check_functions_are_equivalent(fn, device, [])
+
+
+def test_torch_arange_force_dtype_float(device: str):
+    def fn():
+        return torch.arange(5, dtype=torch.float32, device=torch.device(device))
+
+    check_functions_are_equivalent(fn, device, [])
+
+
+def test_torch_arange_force_dtype_int(device: str):
+    def fn():
+        return torch.arange(5, dtype=torch.int32, device=torch.device(device))
+
+    check_functions_are_equivalent(fn, device, [])
