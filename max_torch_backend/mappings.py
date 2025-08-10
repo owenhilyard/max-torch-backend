@@ -16,38 +16,6 @@ import math
 import torch._C._nn  # for conv2d and linear built-ins
 import torch._C  # for flatten built-in
 
-IDENTICAL_FUNCTIONS = [
-    operator.add,
-    operator.sub,
-    operator.mul,
-    operator.truediv,
-    operator.floordiv,
-    operator.pow,
-    operator.mod,
-    operator.getitem,
-    operator.matmul,
-    operator.neg,
-    operator.gt,
-    operator.ge,
-    operator.lt,
-    operator.le,
-    operator.eq,
-    operator.ne,
-    operator.and_,
-    operator.or_,
-    operator.xor,
-    torch.add,
-    torch.sub,
-    torch.mul,
-    torch.div,
-    torch.floor_divide,
-    torch.pow,
-    torch.remainder,
-    str,
-    max,
-    min,
-]
-
 
 def torch_cat_equivalent(tensors: list, dim=0):
     return max_ops.concat(tensors, axis=dim)
@@ -696,6 +664,39 @@ def torch_arange_equivalent(
 
     # Use max_ops.range to create the sequence
     return max_ops.range(start, end, step, out_dim=out_dim, device=device, dtype=dtype)
+
+
+IDENTICAL_FUNCTIONS = [
+    operator.add,
+    operator.sub,
+    operator.mul,
+    operator.truediv,
+    operator.floordiv,
+    operator.pow,
+    operator.mod,
+    operator.getitem,
+    operator.matmul,
+    operator.neg,
+    operator.gt,
+    operator.ge,
+    operator.lt,
+    operator.le,
+    operator.eq,
+    operator.ne,
+    operator.and_,
+    operator.or_,
+    operator.xor,
+    torch.add,
+    torch.sub,
+    torch.mul,
+    torch.div,
+    torch.floor_divide,
+    torch.pow,
+    torch.remainder,
+    str,
+    max,
+    min,
+]
 
 
 MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
