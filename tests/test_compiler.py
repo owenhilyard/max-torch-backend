@@ -164,6 +164,39 @@ def test_outer(device: str):
     check_functions_are_equivalent(fn, device, [a, b])
 
 
+def test_stack_1d(device: str):
+    # Test 1D tensors
+    def fn_1d(a, b):
+        return torch.stack([a, b], dim=0)
+
+    a1d = torch.randn(2)
+    b1d = torch.randn(2)
+    check_functions_are_equivalent(fn_1d, device, [a1d, b1d])
+
+
+@pytest.mark.parametrize("dim", [0, 1, -1])
+def test_stack_2d(device: str, dim: int):
+    def fn(a, b, c):
+        return torch.stack([a, b, c], dim=dim)
+
+    # Create tensors with same shape for stacking
+    a = torch.randn(3, 4)
+    b = torch.randn(3, 4)
+    c = torch.randn(3, 4)
+
+    check_functions_are_equivalent(fn, device, [a, b, c])
+
+
+def test_stack_3d(device: str):
+    # Test 3D tensors
+    def fn_3d(a, b):
+        return torch.stack([a, b], dim=0)
+
+    a3d = torch.randn(2, 3, 4)
+    b3d = torch.randn(2, 3, 4)
+    check_functions_are_equivalent(fn_3d, device, [a3d, b3d])
+
+
 @pytest.mark.parametrize("func", [min, max])
 def test_builtin_min_max(device: str, func):
     """Only works with a single dimension."""
