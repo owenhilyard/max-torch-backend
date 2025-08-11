@@ -639,14 +639,14 @@ def torch_arange_equivalent(
     device=None,
     requires_grad=False,
 ):
+    if isinstance(start, float):
+        raise ValueError("We don't support float start values for torch.arange")
+    if isinstance(step, float):
+        raise ValueError("We don't support float step values for torch.arange")
+    if isinstance(end, float):
+        raise ValueError("We don't support float end values for torch.arange")
     if dtype is None:
-        # Default dtype inference like PyTorch:
-        # If any of start, end, step are float, use float32
-        # Otherwise use int64
-        if any(isinstance(x, float) for x in [start, end, step]):
-            dtype = torch.float32
-        else:
-            dtype = torch.int64
+        dtype = torch.int64
     dtype = DType.from_torch(dtype)
 
     if device is None:
@@ -660,9 +660,9 @@ def torch_arange_equivalent(
 
     # Calculate output dimension for max_ops.range
     # The length is ceil((end - start) / step) as per PyTorch docs
-
-    out_length = math.ceil((end - start) / step)
-    out_dim = int(out_length)  # Convert to integer for MAX
+    out_dim = end - start
+    if step != 1:
+        out_dim = int(math.ceil(out_dim / step))
 
     # Use max_ops.range to create the sequence
     return max_ops.range(start, end, step, out_dim=out_dim, device=device, dtype=dtype)
