@@ -796,18 +796,6 @@ def no_op(*args, **kwargs):
     pass
 
 
-def torch_getitem_equivalent(input, index):
-    try:
-        if len(index) == 4:
-            pass
-    except Exception:
-        pass
-    if isinstance(input, max_ops.TensorValue):
-        result = max_ops.slice_tensor(input, index)
-        return result
-    return input[index]
-
-
 IDENTICAL_FUNCTIONS = [
     operator.add,
     operator.sub,
@@ -833,6 +821,7 @@ IDENTICAL_FUNCTIONS = [
     operator.ifloordiv,
     operator.ipow,
     operator.imod,
+    operator.getitem,
     torch.add,
     torch.sub,
     torch.mul,
@@ -888,7 +877,6 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     torch.outer: max_ops.outer,
     torch.stack: torch_stack_equivalent,
     torch.sum: torch_sum_equivalent,
-    operator.getitem: torch_getitem_equivalent,
     # methods are given as strings in the graph
     "float": torch_float_equivalent,
     "expand": torch_expand_equivalent,
