@@ -757,7 +757,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     torch._C._log_api_usage_once: torch_log_api_usage_once_equivalent,
     torch._functorch.vmap.lazy_load_decompositions: no_op,
     torch._C._functorch._vmap_increment_nesting: no_op,
-    torch._C._functorch._add_batch_dim: no_op,  # TODO: Fixme, this is not actually a no-op
+    # torch._C._functorch._add_batch_dim: no_op,  # TODO: Fixme, this is not actually a no-op
     torch.tril: torch_tril_equivalent,
     torch.split: torch_split_equivalent,
     torch.amax: torch_amax_equivalent,
