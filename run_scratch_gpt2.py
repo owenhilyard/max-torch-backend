@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
+from max_torch_backend import MaxCompiler
 
 
 class CausalSelfAttention(nn.Module):
@@ -321,7 +322,7 @@ def main():
     print("=" * 50)
 
     # Compile just the forward pass, not the full generation loop
-    compiled_forward = torch.compile(model.forward, fullgraph=True)
+    compiled_forward = torch.compile(model.forward, fullgraph=True, backend=MaxCompiler)
 
     @torch.no_grad()
     def generate_with_compiled_step(idx, max_new_tokens, temperature=1.0, top_k=None):
