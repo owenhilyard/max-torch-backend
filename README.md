@@ -1,16 +1,12 @@
 # MAX-Torch Backend
 
-Simple use [`torch.compile`](https://docs.pytorch.org/tutorials/intermediate/torch_compile_tutorial.html), but with Modular's MAX backend.
+Simply use [`torch.compile`](https://docs.pytorch.org/tutorials/intermediate/torch_compile_tutorial.html), but with Modular's MAX backend.
 
 ## Installation
-
-Ensure you have the required dependencies:
 
 ```bash
 pip install git+https://github.com/gabrieldemarmiesse/max-torch-backend.git
 ```
-
-**Requirements**: Python ≥3.12 and Modular's nightly Python index.
 
 ## Quick Start
 
