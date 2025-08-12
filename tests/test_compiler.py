@@ -3782,3 +3782,51 @@ def test_mse_loss_3d(device: str):
     input_tensor = torch.randn(2, 3, 4)
     target = torch.randn(2, 3, 4)
     check_functions_are_equivalent(fn, device, [input_tensor, target])
+
+
+def test_addmm_basic(device: str):
+    """Test basic torch.addmm operation"""
+
+    def fn(bias, mat1, mat2):
+        return torch.addmm(bias, mat1, mat2)
+
+    bias = torch.randn(3, 4)
+    mat1 = torch.randn(3, 5)
+    mat2 = torch.randn(5, 4)
+    check_functions_are_equivalent(fn, device, [bias, mat1, mat2])
+
+
+def test_addmm_with_alpha_beta(device: str):
+    """Test torch.addmm with custom alpha and beta parameters"""
+
+    def fn(bias, mat1, mat2):
+        return torch.addmm(bias, mat1, mat2, alpha=2.0, beta=0.5)
+
+    bias = torch.randn(3, 4)
+    mat1 = torch.randn(3, 5)
+    mat2 = torch.randn(5, 4)
+    check_functions_are_equivalent(fn, device, [bias, mat1, mat2])
+
+
+def test_addmm_different_shapes(device: str):
+    """Test torch.addmm with different matrix shapes"""
+
+    def fn(bias, mat1, mat2):
+        return torch.addmm(bias, mat1, mat2)
+
+    bias = torch.randn(2, 8)
+    mat1 = torch.randn(2, 6)
+    mat2 = torch.randn(6, 8)
+    check_functions_are_equivalent(fn, device, [bias, mat1, mat2])
+
+
+def test_addmm_broadcast_bias(device: str):
+    """Test torch.addmm with bias that needs broadcasting"""
+
+    def fn(bias, mat1, mat2):
+        return torch.addmm(bias, mat1, mat2)
+
+    bias = torch.randn(4)  # Will broadcast to (3, 4)
+    mat1 = torch.randn(3, 5)
+    mat2 = torch.randn(5, 4)
+    check_functions_are_equivalent(fn, device, [bias, mat1, mat2])
