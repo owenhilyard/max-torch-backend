@@ -933,6 +933,10 @@ def torch_mse_loss_equivalent(
         raise ValueError(f"Unsupported reduction type: {reduction}")
 
 
+def torch_t_equivalent(input):
+    return torch_transpose_equivalent(input, 0, 1)
+
+
 def no_op(*args, **kwargs):
     pass
 
@@ -1023,6 +1027,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     torch.sum: torch_sum_equivalent,
     torch.matmul: operator.matmul,
     torch.full: torch_full_equivalent,
+    torch.t: torch_t_equivalent,
     # methods are given as strings in the graph
     "float": torch_float_equivalent,
     "expand": torch_expand_equivalent,
@@ -1051,6 +1056,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     "reshape": torch_view_equivalent,  # reshape is equivalent to view for MAX backend
     "unbind": torch_unbind_equivalent,
     "repeat_interleave": torch_repeat_interleave_equivalent,
+    "t": torch_t_equivalent,
 }
 
 for func in IDENTICAL_FUNCTIONS:

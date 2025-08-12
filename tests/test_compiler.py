@@ -59,6 +59,24 @@ def test_iadd(device: str):
     check_functions_are_equivalent(fn, device, [a, b])
 
 
+def test_t_method(device: str):
+    def fn(x):
+        return x.t()
+
+    a = torch.randn(3, 4)
+
+    check_functions_are_equivalent(fn, device, [a])
+
+
+def test_t_function(device: str):
+    def fn(x):
+        return torch.t(x)
+
+    a = torch.randn(3, 4)
+
+    check_functions_are_equivalent(fn, device, [a])
+
+
 def test_new_ones(device: str):
     def fn(x):
         return x.new_ones((3, 3))
