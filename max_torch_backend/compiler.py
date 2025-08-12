@@ -7,14 +7,64 @@ import max.graph.value
 from max import engine
 from max.driver import Accelerator, accelerator_count, CPU
 from .mappings import MAPPING_TORCH_TO_MOJO_FUNCTIONS
-import uuid
 import warnings
+from torch._dynamo.backends.common import aot_autograd
 
 from max.graph import DeviceRef
+from functorch.compile import make_boxed_func
+from torch._decomp import core_aten_decompositions
+from torch.fx.experimental.proxy_tensor import make_fx
 
 
 class MaxCompilerError(Exception):
     pass
+
+
+def apply_decompositions(gm: torch.fx.GraphModule) -> torch.fx.GraphModule:
+    """
+    Apply decompositions to any unsupported operations using PyTorch's make_fx.
+    This is a generic solution that works for any operation in core_aten_decompositions.
+    """
+    decomposition_table = core_aten_decompositions()
+    # Check if any nodes need decomposition
+    needs_decomposition = any(
+        node.op == "call_function" and node.target in decomposition_table
+        for node in gm.graph.nodes
+    )
+
+    if not needs_decomposition:
+        return gm
+
+    # Create a wrapper function that applies decompositions using make_fx
+    def decompose_with_make_fx(*args):
+        # We need to create a function that represents the entire graph
+        # and then apply decompositions to it
+        return gm(*args)
+
+    # Get example inputs from the first few placeholder nodes
+    example_inputs = []
+    for node in gm.graph.nodes:
+        if node.op == "placeholder":
+            if "val" in node.meta:
+                example_value = node.meta["val"]
+            elif "example_value" in node.meta:
+                example_value = node.meta["example_value"]
+            else:
+                # Create a dummy tensor - this might not work for all cases
+                example_value = torch.tensor(0.0)
+
+            if isinstance(example_value, torch.Tensor):
+                # Use the exact same shape as the original to avoid shape mismatches
+                dummy_tensor = torch.zeros_like(example_value)
+                example_inputs.append(dummy_tensor)
+            else:
+                example_inputs.append(example_value)
+
+    # Apply decompositions using make_fx
+    decomposed_gm = make_fx(
+        decompose_with_make_fx, decomposition_table=decomposition_table
+    )(*example_inputs)
+    return decomposed_gm
 
 
 def analyze_dynamic_shapes(example_inputs):
@@ -128,7 +178,10 @@ class _GraphFactory:
             ]
 
     def handle_placeholder(self, node: torch.fx.Node):
-        example_value = node.meta["example_value"]
+        if "example_value" in node.meta:
+            example_value = node.meta["example_value"]
+        elif "val" in node.meta:
+            example_value = node.meta["val"]
         if isinstance(example_value, torch.SymInt):
             pass
         if isinstance(example_value, torch.Tensor | torch.nn.Parameter):
@@ -157,12 +210,17 @@ class _GraphFactory:
         func_kwargs = {
             k: self.tensor_book.convert_to_max(v) for k, v in node.kwargs.items()
         }
-        if node.target not in MAPPING_TORCH_TO_MOJO_FUNCTIONS:
+        key = node.target
+        if hasattr(key, "namespace") and key.namespace == "aten":
+            key = key.overloadpacket
+
+        if key not in MAPPING_TORCH_TO_MOJO_FUNCTIONS:
             raise ValueError(
                 f"Failing at node {node_idx}. Function {get_fully_qualified_name(node.target)}  not supported by the Max backend yet."
             )
+
         try:
-            func_output = MAPPING_TORCH_TO_MOJO_FUNCTIONS[node.target](
+            func_output = MAPPING_TORCH_TO_MOJO_FUNCTIONS[key](
                 *func_args, **func_kwargs
             )
         except RuntimeError as e:
@@ -178,11 +236,29 @@ class _GraphFactory:
         self.tensor_book[node.name] = attr_value
 
     def handle_output(self, node: torch.fx.Node):
-        output_tensors = tuple(self.tensor_book.convert_to_max(x) for x in node.args[0])
+        output_tensors = []
+
+        # None outputs can be required. So we remember here if
+        # we want an output tensor (and we reccord the tensor position)
+        # or if we want None.
+        output_blueprint: list[int | None] = []
+
+        for x in node.args[0]:
+            converted = self.tensor_book.convert_to_max(x)
+            if converted is None:
+                output_blueprint.append(None)
+            else:
+                # position of the output tensor
+                output_blueprint.append(len(output_tensors))
+                output_tensors.append(converted)
+
+        # Store the none indices for runtime handling
         self.graph.output(*output_tensors)
         self.graph.__exit__(None, None, None)
+        return output_blueprint
 
-    def create_graph(self, gm: torch.fx.GraphModule) -> Graph:
+    def create_graph(self, gm: torch.fx.GraphModule) -> tuple[Graph, list[int | None]]:
+        output_blueprint = None
         for node_idx, node in enumerate(gm.graph.nodes):
             if node.op == "placeholder":
                 self.handle_placeholder(node)
@@ -196,39 +272,14 @@ class _GraphFactory:
             elif node.op == "get_attr":
                 self.handle_get_attr(node)
             elif node.op == "output":
-                self.handle_output(node)
+                output_blueprint = self.handle_output(node)
             else:
                 raise ValueError(f"Unsupported node type: {node.op}")
-        return self.graph
-
-
-def generate_graph(gm: torch.fx.GraphModule) -> Graph:
-    """Generates a MAX graph from a PyTorch FX GraphModule."""
-    factory = _GraphFactory()
-    return factory.create_graph(gm)
-
-
-def generate_input_types(
-    example_inputs: list[torch.Tensor],
-) -> list[max.graph.value.TensorType]:
-    result = []
-    for inp in example_inputs:
-        if not isinstance(inp, torch.Tensor):
-            continue
-        shape = []
-        for dim_idx, dim in enumerate(inp.shape):
-            if dim_idx in getattr(inp, "_dynamo_dynamic_indices", {}):
-                shape.append("a" + str(uuid.uuid4()).replace("-", "_"))
-            else:
-                shape.append(int(dim))
-        result.append(
-            max.graph.value.TensorType(
-                dtype=DType.from_torch(inp.dtype),
-                shape=shape,
-                device=max_device_ref(inp.device),
+        if output_blueprint is None:
+            raise ValueError(
+                "No output node found in the graph, this should never happen."
             )
-        )
-    return result
+        return self.graph, output_blueprint
 
 
 def get_accelerators():
@@ -255,20 +306,12 @@ class MaxCompiler:
     def __init__(
         self, gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor], mode=None
     ):
-        self.gm = gm
         self.example_inputs = example_inputs
-        # gm.graph.print_tabular()
-        # analyze_dynamic_shapes(example_inputs)
-        # print(f"number of nodes: {len(gm.graph.nodes)}")
-        # print(f"Number of inputs for the examples: {len(example_inputs)}")
+        gm = apply_decompositions(gm)
 
-        # max_input_specs = generate_input_types(keep_only_tensors(example_inputs))
-        ## print(f"max_input_specs: {max_input_specs}")
-        # with Graph("some_graph", input_types=max_input_specs) as graph:
-        #    outputs = GraphFunction(self.gm)(*graph.inputs)
-        #    graph.output(*outputs)
+        gm.graph.print_tabular()
 
-        graph = generate_graph(gm)
+        graph, self.output_blueprint = _GraphFactory().create_graph(gm)
 
         session = engine.InferenceSession(devices=list(get_accelerators()))
         self.model = session.load(graph)
@@ -276,4 +319,23 @@ class MaxCompiler:
     def __call__(self, *args) -> list[torch.Tensor]:
         # Detach tensors to avoid gradient tracking issues with DLpack
         outputs = self.model.execute(*keep_only_tensors(args, detach=True))
-        return [torch.from_dlpack(x) for x in outputs]
+        tensor_outputs = [torch.from_dlpack(x) for x in outputs]
+
+        # Reconstruct the original output structure with None values
+        result = []
+        for i in self.output_blueprint:
+            if i is None:
+                result.append(None)
+            else:
+                result.append(tensor_outputs[i])
+        return result
+
+
+def _MaxCompilerBackpropCompatible(
+    gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor], mode=None
+):
+    _max_compiler = MaxCompiler(gm, example_inputs)
+    return make_boxed_func(_max_compiler.__call__)
+
+
+MaxCompilerBackpropCompatible = aot_autograd(fw_compiler=_MaxCompilerBackpropCompatible)
