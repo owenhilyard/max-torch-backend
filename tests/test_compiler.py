@@ -2596,7 +2596,7 @@ def test_unary_negation(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_negation_with_arithmetic(device: str):
+def test_negation_with_arithmetic(device: str, compiler_to_use):
     """Test negation combined with arithmetic operations"""
 
     def fn(x, y):
@@ -2605,7 +2605,7 @@ def test_negation_with_arithmetic(device: str):
     x = torch.randn(3, 4)
     y = torch.randn(3, 4)
 
-    check_functions_are_equivalent(fn, device, [x, y])
+    check_functions_are_equivalent(fn, device, [x, y], compiler=compiler_to_use)
 
 
 def test_double_negation(device: str):

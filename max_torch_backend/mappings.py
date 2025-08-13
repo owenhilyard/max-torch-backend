@@ -1245,6 +1245,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.gt: operator.gt,
     aten.eq: operator.eq,
     aten.ne: operator.ne,
+    aten.neg: operator.neg,
     aten.div: torch_div_equivalent,
     aten.floordiv: operator.floordiv,
     aten.permute: max_ops.permute,
