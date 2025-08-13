@@ -3865,7 +3865,7 @@ def test_mse_loss_mean_reduction(device: str, compiler_to_use):
     )
 
 
-def test_mse_loss_sum_reduction(device: str):
+def test_mse_loss_sum_reduction(device: str, compiler_to_use):
     """Test MSE loss with sum reduction"""
 
     def fn(input_tensor, target):
@@ -3873,7 +3873,9 @@ def test_mse_loss_sum_reduction(device: str):
 
     input_tensor = torch.randn(3, 3)
     target = torch.randn(3, 3)
-    check_functions_are_equivalent(fn, device, [input_tensor, target])
+    check_functions_are_equivalent(
+        fn, device, [input_tensor, target], compiler=compiler_to_use
+    )
 
 
 def test_mse_loss_none_reduction(device: str, compiler_to_use):

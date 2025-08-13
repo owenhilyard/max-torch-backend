@@ -918,7 +918,7 @@ def torch_sum_equivalent(input, dim=None, keepdim=False, *, dtype=None):
 
     result = input
 
-    if dim is None:
+    if not dim:
         dim = tuple(range(len(input.shape)))
     elif isinstance(dim, int):
         dim = (dim,)
