@@ -2040,7 +2040,7 @@ def test_linear_with_bias(device: str, compiler_to_use):
     )
 
 
-def test_linear_small_dimensions(device: str):
+def test_linear_small_dimensions(device: str, compiler_to_use):
     """Test linear function with small dimensions"""
 
     def fn(input, weight):
@@ -2052,10 +2052,12 @@ def test_linear_small_dimensions(device: str):
     input = torch.randn(batch_size, in_features)
     weight = torch.randn(out_features, in_features)
 
-    check_functions_are_equivalent(fn, device, [input, weight])
+    check_functions_are_equivalent(
+        fn, device, [input, weight], compiler=compiler_to_use
+    )
 
 
-def test_linear_medium_dimensions(device: str):
+def test_linear_medium_dimensions(device: str, compiler_to_use):
     """Test linear function with medium dimensions"""
 
     def fn(input, weight):
@@ -2067,10 +2069,12 @@ def test_linear_medium_dimensions(device: str):
     input = torch.randn(batch_size, in_features)
     weight = torch.randn(out_features, in_features)
 
-    check_functions_are_equivalent(fn, device, [input, weight])
+    check_functions_are_equivalent(
+        fn, device, [input, weight], compiler=compiler_to_use
+    )
 
 
-def test_linear_single_dimension(device: str):
+def test_linear_single_dimension(device: str, compiler_to_use):
     """Test linear function with single dimensions"""
 
     def fn(input, weight):
@@ -2082,10 +2086,12 @@ def test_linear_single_dimension(device: str):
     input = torch.randn(batch_size, in_features)
     weight = torch.randn(out_features, in_features)
 
-    check_functions_are_equivalent(fn, device, [input, weight])
+    check_functions_are_equivalent(
+        fn, device, [input, weight], compiler=compiler_to_use
+    )
 
 
-def test_linear_3d_input(device: str):
+def test_linear_3d_input(device: str, compiler_to_use):
     """Test linear function with 3D input (batch, sequence, features)"""
 
     def fn(input, weight, bias):
@@ -2098,10 +2104,12 @@ def test_linear_3d_input(device: str):
     weight = torch.randn(out_features, in_features)
     bias = torch.randn(out_features)
 
-    check_functions_are_equivalent(fn, device, [input, weight, bias])
+    check_functions_are_equivalent(
+        fn, device, [input, weight, bias], compiler=compiler_to_use
+    )
 
 
-def test_linear_4d_input(device: str):
+def test_linear_4d_input(device: str, compiler_to_use):
     """Test linear function with 4D input (..., features)"""
 
     def fn(input, weight):
@@ -2113,10 +2121,12 @@ def test_linear_4d_input(device: str):
     input = torch.randn(batch_size, height, width, in_features)
     weight = torch.randn(out_features, in_features)
 
-    check_functions_are_equivalent(fn, device, [input, weight])
+    check_functions_are_equivalent(
+        fn, device, [input, weight], compiler=compiler_to_use
+    )
 
 
-def test_linear_1d_input(device: str):
+def test_linear_1d_input(device: str, compiler_to_use):
     """Test linear function with 1D input (just features)"""
 
     def fn(input, weight, bias):
@@ -2128,10 +2138,12 @@ def test_linear_1d_input(device: str):
     weight = torch.randn(out_features, in_features)
     bias = torch.randn(out_features)
 
-    check_functions_are_equivalent(fn, device, [input, weight, bias])
+    check_functions_are_equivalent(
+        fn, device, [input, weight, bias], compiler=compiler_to_use
+    )
 
 
-def test_linear_chained(device: str):
+def test_linear_chained(device: str, compiler_to_use):
     """Test chained linear functions (simple MLP)"""
 
     def fn(input, weight1, bias1, weight2, bias2):
@@ -2148,10 +2160,12 @@ def test_linear_chained(device: str):
     weight2 = torch.randn(out_features, hidden_features)
     bias2 = torch.randn(out_features)
 
-    check_functions_are_equivalent(fn, device, [input, weight1, bias1, weight2, bias2])
+    check_functions_are_equivalent(
+        fn, device, [input, weight1, bias1, weight2, bias2], compiler=compiler_to_use
+    )
 
 
-def test_linear_broadcasting(device: str):
+def test_linear_broadcasting(device: str, compiler_to_use):
     """Test linear function with broadcasting scenarios"""
 
     def fn(input, weight, bias):
@@ -2165,10 +2179,12 @@ def test_linear_broadcasting(device: str):
     weight = torch.randn(out_features, in_features)
     bias = torch.randn(out_features)  # Should broadcast across batch and sequence dims
 
-    check_functions_are_equivalent(fn, device, [input, weight, bias])
+    check_functions_are_equivalent(
+        fn, device, [input, weight, bias], compiler=compiler_to_use
+    )
 
 
-def test_linear_single_feature(device: str):
+def test_linear_single_feature(device: str, compiler_to_use):
     """Test linear function with single input/output feature"""
 
     def fn(input, weight, bias):
@@ -2181,10 +2197,12 @@ def test_linear_single_feature(device: str):
     weight = torch.randn(out_features, in_features)
     bias = torch.randn(out_features)
 
-    check_functions_are_equivalent(fn, device, [input, weight, bias])
+    check_functions_are_equivalent(
+        fn, device, [input, weight, bias], compiler=compiler_to_use
+    )
 
 
-def test_linear_large_dimensions(device: str):
+def test_linear_large_dimensions(device: str, compiler_to_use):
     """Test linear function with larger dimensions"""
 
     def fn(input, weight):
@@ -2196,10 +2214,12 @@ def test_linear_large_dimensions(device: str):
     input = torch.randn(batch_size, in_features)
     weight = torch.randn(out_features, in_features)
 
-    check_functions_are_equivalent(fn, device, [input, weight], atol=1e-2, rtol=1e-2)
+    check_functions_are_equivalent(
+        fn, device, [input, weight], atol=1e-2, rtol=1e-2, compiler=compiler_to_use
+    )
 
 
-def test_linear_with_transpose(device: str):
+def test_linear_with_transpose(device: str, compiler_to_use):
     """Test linear function combined with transpose operations"""
 
     def fn(input, weight, bias):
@@ -2214,10 +2234,12 @@ def test_linear_with_transpose(device: str):
     weight = torch.randn(out_features, in_features)
     bias = torch.randn(out_features)
 
-    check_functions_are_equivalent(fn, device, [input, weight, bias])
+    check_functions_are_equivalent(
+        fn, device, [input, weight, bias], compiler=compiler_to_use
+    )
 
 
-def test_linear_zero_bias(device: str):
+def test_linear_zero_bias(device: str, compiler_to_use):
     """Test linear function with zero bias"""
 
     def fn(input, weight, bias):
@@ -2230,7 +2252,9 @@ def test_linear_zero_bias(device: str):
     weight = torch.randn(out_features, in_features)
     bias = torch.zeros(out_features)  # Zero bias
 
-    check_functions_are_equivalent(fn, device, [input, weight, bias])
+    check_functions_are_equivalent(
+        fn, device, [input, weight, bias], compiler=compiler_to_use
+    )
 
 
 def test_tensor_view_basic(device: str):
