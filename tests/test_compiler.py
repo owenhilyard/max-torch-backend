@@ -356,8 +356,6 @@ def test_torch_amin_amax_single_element_options(
     device: str, shapes, dims, keepdim, func
 ):
     """Only works with a single element."""
-    if device == "cuda":
-        pytest.xfail("ValueError: GPU reduction currently limited to inner axis.")
 
     def fn(x):
         return func(x, dim=dims, keepdim=keepdim)
@@ -1675,9 +1673,6 @@ def test_recompilation(device: str, compiler_to_use):
 def test_mean_no_dim(device: str, tensor_shapes: tuple):
     """Test mean without specifying dimensions (reduce all)"""
 
-    if device == "cuda":
-        pytest.xfail("GPU reduction currently limited to inner axis.")
-
     def fn(x):
         return torch.mean(x)
 
@@ -1722,9 +1717,6 @@ def test_mean_keepdim_true(device: str, tensor_shapes: tuple):
 def test_mean_multiple_dims(device: str):
     """Test mean with multiple dimensions"""
 
-    if device == "cuda":
-        pytest.xfail("GPU reduction currently limited to inner axis.")
-
     def fn(x):
         return torch.mean(x, dim=(1, 2))
 
@@ -1735,8 +1727,6 @@ def test_mean_multiple_dims(device: str):
 
 def test_mean_multiple_dims_keepdim(device: str):
     """Test mean with multiple dimensions and keepdim=True"""
-    if device == "cuda":
-        pytest.xfail("GPU reduction currently limited to inner axis.")
 
     def fn(x):
         return torch.mean(x, dim=(0, 2), keepdim=True)
