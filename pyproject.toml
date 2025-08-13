@@ -34,6 +34,7 @@ dev = [
     "ibm-fms>=1.2.1",
     "pillow>=11.3.0",
     "pytest>=8.4.1",
+    "pytest-forked>=1.6.0",
     "pytest-xdist>=3.8.0",
     "requests>=2.32.4",
     "ruff>=0.12.7",
