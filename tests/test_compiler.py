@@ -3174,7 +3174,7 @@ def test_dropout_inference(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_dropout_different_probabilities(device: str):
+def test_dropout_different_probabilities(device: str, compiler_to_use):
     """Test dropout with different dropout probabilities in inference"""
 
     def fn_p01(x):
@@ -3188,9 +3188,9 @@ def test_dropout_different_probabilities(device: str):
 
     x = torch.randn(3, 4, 5)
 
-    check_functions_are_equivalent(fn_p01, device, [x])
-    check_functions_are_equivalent(fn_p05, device, [x])
-    check_functions_are_equivalent(fn_p09, device, [x])
+    check_functions_are_equivalent(fn_p01, device, [x], compiler=compiler_to_use)
+    check_functions_are_equivalent(fn_p05, device, [x], compiler=compiler_to_use)
+    check_functions_are_equivalent(fn_p09, device, [x], compiler=compiler_to_use)
 
 
 def test_combined_vgg_like_ops(device: str):
