@@ -760,7 +760,6 @@ def test_conv2d_asymmetric_kernel(device: str):
     check_functions_are_equivalent(fn, device, [x, w])
 
 
-@pytest.mark.xfail(reason="Different input sizes not handled yet")
 def test_conv2d_different_input_sizes(device: str):
     """Test conv2d with different input tensor sizes"""
 
@@ -1517,7 +1516,6 @@ def test_to_dtype_conversion_int_to_float(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-@pytest.mark.xfail(reason="dtype casting not working correctly in MAX backend")
 def test_to_dtype_conversion_float_to_int(device: str):
     """Test converting float tensor to int"""
 
@@ -1578,7 +1576,6 @@ def test_autocast_enter_exit():
     check_functions_are_equivalent(fn, "cpu", [x])
 
 
-@pytest.mark.xfail(reason="dtype casting not working correctly in MAX backend")
 def test_complex_to_operations(device: str):
     """Test complex combinations of .to() operations"""
 
@@ -2869,7 +2866,6 @@ def test_graph_break_with_python_loop_over_tensor(device: str):
     check_functions_are_equivalent(fn_with_python_loop, device, [x])
 
 
-@pytest.mark.xfail(reason="FIXME: dtype issue")
 def test_graph_break_with_python_loop_over_tensor_complexe_dtypes(device: str):
     """Test graph break caused by Python loops over tensor elements"""
 
@@ -3290,7 +3286,6 @@ def test_tril_4_dimensions(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-@pytest.mark.xfail(reason="FIXME: Gets converted to float32 but not sure why")
 def test_tril_int32(device: str):
     """Test tril with float32 tensors"""
 
