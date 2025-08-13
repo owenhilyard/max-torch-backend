@@ -3859,7 +3859,7 @@ def test_mse_loss_3d(device: str):
     check_functions_are_equivalent(fn, device, [input_tensor, target])
 
 
-def test_addmm_basic(device: str):
+def test_addmm_basic(device: str, compiler_to_use):
     """Test basic torch.addmm operation"""
 
     def fn(bias, mat1, mat2):
@@ -3868,10 +3868,12 @@ def test_addmm_basic(device: str):
     bias = torch.randn(3, 4)
     mat1 = torch.randn(3, 5)
     mat2 = torch.randn(5, 4)
-    check_functions_are_equivalent(fn, device, [bias, mat1, mat2])
+    check_functions_are_equivalent(
+        fn, device, [bias, mat1, mat2], compiler=compiler_to_use
+    )
 
 
-def test_addmm_with_alpha_beta(device: str):
+def test_addmm_with_alpha_beta(device: str, compiler_to_use):
     """Test torch.addmm with custom alpha and beta parameters"""
 
     def fn(bias, mat1, mat2):
@@ -3880,10 +3882,12 @@ def test_addmm_with_alpha_beta(device: str):
     bias = torch.randn(3, 4)
     mat1 = torch.randn(3, 5)
     mat2 = torch.randn(5, 4)
-    check_functions_are_equivalent(fn, device, [bias, mat1, mat2])
+    check_functions_are_equivalent(
+        fn, device, [bias, mat1, mat2], compiler=compiler_to_use
+    )
 
 
-def test_addmm_different_shapes(device: str):
+def test_addmm_different_shapes(device: str, compiler_to_use):
     """Test torch.addmm with different matrix shapes"""
 
     def fn(bias, mat1, mat2):
@@ -3892,10 +3896,12 @@ def test_addmm_different_shapes(device: str):
     bias = torch.randn(2, 8)
     mat1 = torch.randn(2, 6)
     mat2 = torch.randn(6, 8)
-    check_functions_are_equivalent(fn, device, [bias, mat1, mat2])
+    check_functions_are_equivalent(
+        fn, device, [bias, mat1, mat2], compiler=compiler_to_use
+    )
 
 
-def test_addmm_broadcast_bias(device: str):
+def test_addmm_broadcast_bias(device: str, compiler_to_use):
     """Test torch.addmm with bias that needs broadcasting"""
 
     def fn(bias, mat1, mat2):
@@ -3904,4 +3910,6 @@ def test_addmm_broadcast_bias(device: str):
     bias = torch.randn(4)  # Will broadcast to (3, 4)
     mat1 = torch.randn(3, 5)
     mat2 = torch.randn(5, 4)
-    check_functions_are_equivalent(fn, device, [bias, mat1, mat2])
+    check_functions_are_equivalent(
+        fn, device, [bias, mat1, mat2], compiler=compiler_to_use
+    )
