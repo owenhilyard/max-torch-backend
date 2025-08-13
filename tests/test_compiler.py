@@ -1884,7 +1884,7 @@ def test_rsqrt_with_powers_of_two(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_sqrt_with_perfect_squares(device: str):
+def test_sqrt_with_perfect_squares(device: str, compiler_to_use):
     """Test sqrt with perfect squares for exact mathematical results"""
 
     def fn(x):
@@ -1892,7 +1892,7 @@ def test_sqrt_with_perfect_squares(device: str):
 
     x = torch.tensor([1.0, 4.0, 9.0, 16.0, 25.0])  # Perfect squares
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_rsqrt_sqrt_relationship(device: str):
@@ -1919,7 +1919,7 @@ def test_rsqrt_combined_with_arithmetic(device: str):
     check_functions_are_equivalent(fn, device, [x, y])
 
 
-def test_sqrt_combined_with_arithmetic(device: str):
+def test_sqrt_combined_with_arithmetic(device: str, compiler_to_use):
     """Test sqrt combined with arithmetic operations"""
 
     def fn(x, y):
@@ -1929,7 +1929,7 @@ def test_sqrt_combined_with_arithmetic(device: str):
     x = torch.randn(3, 4).abs() + 0.01
     y = torch.randn(3, 4)
 
-    check_functions_are_equivalent(fn, device, [x, y])
+    check_functions_are_equivalent(fn, device, [x, y], compiler=compiler_to_use)
 
 
 def test_chained_sqrt_rsqrt_operations(device: str, compiler_to_use):
@@ -1956,7 +1956,7 @@ def test_rsqrt_with_trigonometric_functions(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_sqrt_with_trigonometric_functions(device: str):
+def test_sqrt_with_trigonometric_functions(device: str, compiler_to_use):
     """Test sqrt combined with trigonometric functions"""
 
     def fn(x):
@@ -1965,7 +1965,7 @@ def test_sqrt_with_trigonometric_functions(device: str):
 
     x = torch.randn(3, 4).abs() + 0.01
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_tensor_methods_chain_sqrt_rsqrt(device: str):
@@ -1979,7 +1979,7 @@ def test_tensor_methods_chain_sqrt_rsqrt(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_sqrt_rsqrt_with_transpose(device: str):
+def test_sqrt_rsqrt_with_transpose(device: str, compiler_to_use):
     """Test sqrt and rsqrt with transpose operations"""
 
     def fn(x):
@@ -1988,10 +1988,10 @@ def test_sqrt_rsqrt_with_transpose(device: str):
 
     x = torch.randn(3, 4).abs() + 0.01
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_sqrt_rsqrt_broadcasting(device: str):
+def test_sqrt_rsqrt_broadcasting(device: str, compiler_to_use):
     """Test sqrt and rsqrt with broadcasting"""
 
     def fn(x, y):
@@ -2002,7 +2002,7 @@ def test_sqrt_rsqrt_broadcasting(device: str):
     x = torch.randn(3, 1).abs() + 0.01
     y = torch.randn(1, 4).abs() + 0.1
 
-    check_functions_are_equivalent(fn, device, [x, y])
+    check_functions_are_equivalent(fn, device, [x, y], compiler=compiler_to_use)
 
 
 def test_linear_basic(device: str, compiler_to_use):
