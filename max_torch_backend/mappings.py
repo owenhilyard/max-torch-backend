@@ -938,6 +938,14 @@ def torch_sum_equivalent(input, dim=None, keepdim=False, *, dtype=None):
     return result
 
 
+def torch_aten__softmax_equivalent(input, dim, half_to_float):
+    if half_to_float:
+        dtype = torch.float32
+    else:
+        dtype = None
+    return torch_softmax_equivalent(input, dim=dim, dtype=dtype)
+
+
 def torch_softmax_equivalent(input, dim=-1, dtype=None):
     if dtype is not None:
         max_dtype = DType.from_torch(dtype)
@@ -1233,6 +1241,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.native_layer_norm: torch_native_layer_norm_equivalent,
     aten.gelu: torch_gelu_equivalent,
     aten.softmax: torch_softmax_equivalent,
+    aten._softmax: torch_aten__softmax_equivalent,
     aten.masked_fill: torch_masked_fill_equivalent,
     aten.split: torch_split_equivalent,
     aten.tril: torch_tril_equivalent,

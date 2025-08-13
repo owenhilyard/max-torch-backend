@@ -3637,20 +3637,20 @@ def test_softmax_dim_1(device: str):
     check_functions_are_equivalent(fn, device, [input_tensor])
 
 
-def test_softmax_multidim(device: str):
+def test_softmax_multidim(device: str, compiler_to_use):
     def fn(x):
         return F.softmax(x, dim=2)
 
     input_tensor = torch.randn(3, 4, 5)
-    check_functions_are_equivalent(fn, device, [input_tensor])
+    check_functions_are_equivalent(fn, device, [input_tensor], compiler=compiler_to_use)
 
 
-def test_softmax_negative_dim(device: str):
+def test_softmax_negative_dim(device: str, compiler_to_use):
     def fn(x):
         return F.softmax(x, dim=-2)
 
     input_tensor = torch.randn(3, 4, 5)
-    check_functions_are_equivalent(fn, device, [input_tensor])
+    check_functions_are_equivalent(fn, device, [input_tensor], compiler=compiler_to_use)
 
 
 def test_sum_basic(device: str):
