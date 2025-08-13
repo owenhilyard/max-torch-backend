@@ -2290,7 +2290,7 @@ def test_linear_zero_bias(device: str, compiler_to_use):
     )
 
 
-def test_tensor_view_basic(device: str):
+def test_tensor_view_basic(device: str, compiler_to_use):
     """Test basic tensor.view() operation"""
 
     def fn(x):
@@ -2298,10 +2298,10 @@ def test_tensor_view_basic(device: str):
 
     x = torch.randn(2, 3, 4)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_tensor_view_with_negative_one(device: str):
+def test_tensor_view_with_negative_one(device: str, compiler_to_use):
     """Test tensor.view() with -1 (infer dimension)"""
 
     def fn(x):
@@ -2309,10 +2309,10 @@ def test_tensor_view_with_negative_one(device: str):
 
     x = torch.randn(2, 3, 4)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_tensor_view_flatten(device: str):
+def test_tensor_view_flatten(device: str, compiler_to_use):
     """Test tensor.view() to flatten tensor"""
 
     def fn(x):
@@ -2320,7 +2320,7 @@ def test_tensor_view_flatten(device: str):
 
     x = torch.randn(2, 3, 4)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_tensor_view_2d_to_3d(device: str):
