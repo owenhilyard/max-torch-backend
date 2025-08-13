@@ -955,6 +955,26 @@ def torch_addmm_equivalent(input, mat1, mat2, *, beta=1.0, alpha=1.0):
     return operator.add(scaled_input, matmul_result)
 
 
+def torch_foreach_add_equivalent(tensors, others, alpha=1.0):
+    """
+    Equivalent to torch._foreach_add.List - element-wise addition of two lists of tensors.
+    Computes: tensors[i] + alpha * others[i] for each i
+    """
+    if len(tensors) != len(others):
+        raise ValueError(
+            f"Expected len(tensors) == len(others), but got {len(tensors)} and {len(others)}"
+        )
+
+    result = []
+    for tensor, other in zip(tensors, others):
+        if alpha == 1.0:
+            result.append(tensor + other)
+        else:
+            result.append(tensor + alpha * other)
+
+    return result
+
+
 def no_op(*args, **kwargs):
     pass
 
@@ -1055,6 +1075,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.t: torch_t_equivalent,
     aten.addmm: torch_addmm_equivalent,
     aten.mse_loss: torch_mse_loss_equivalent,
+    aten._foreach_add: torch_foreach_add_equivalent,
     aten.sub: operator.sub,
     aten.mul: operator.mul,
     aten.add: operator.add,
