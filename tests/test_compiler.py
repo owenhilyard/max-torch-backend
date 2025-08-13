@@ -1700,7 +1700,7 @@ def test_mean_no_dim(device: str, tensor_shapes: tuple, compiler_to_use):
     check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
-def test_mean_single_dim(device: str, tensor_shapes: tuple):
+def test_mean_single_dim(device: str, tensor_shapes: tuple, compiler_to_use):
     """Test mean with single dimension"""
 
     def fn(x):
@@ -1708,10 +1708,10 @@ def test_mean_single_dim(device: str, tensor_shapes: tuple):
 
     a = torch.randn(tensor_shapes) if len(tensor_shapes) > 1 else torch.randn(3, 4)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
-def test_mean_negative_dim(device: str, tensor_shapes: tuple):
+def test_mean_negative_dim(device: str, tensor_shapes: tuple, compiler_to_use):
     """Test mean with negative dimension"""
 
     def fn(x):
@@ -1719,7 +1719,7 @@ def test_mean_negative_dim(device: str, tensor_shapes: tuple):
 
     a = torch.randn(tensor_shapes)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
 def test_mean_keepdim_true(device: str, tensor_shapes: tuple, compiler_to_use):
@@ -1733,7 +1733,7 @@ def test_mean_keepdim_true(device: str, tensor_shapes: tuple, compiler_to_use):
     check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
-def test_mean_multiple_dims(device: str):
+def test_mean_multiple_dims(device: str, compiler_to_use):
     """Test mean with multiple dimensions"""
 
     def fn(x):
@@ -1741,10 +1741,10 @@ def test_mean_multiple_dims(device: str):
 
     a = torch.randn(2, 3, 4)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
-def test_mean_multiple_dims_keepdim(device: str):
+def test_mean_multiple_dims_keepdim(device: str, compiler_to_use):
     """Test mean with multiple dimensions and keepdim=True"""
 
     def fn(x):
@@ -1752,10 +1752,10 @@ def test_mean_multiple_dims_keepdim(device: str):
 
     a = torch.randn(2, 3, 4)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
-def test_tensor_mean_method(device: str, tensor_shapes: tuple):
+def test_tensor_mean_method(device: str, tensor_shapes: tuple, compiler_to_use):
     """Test tensor.mean() method"""
 
     def fn(x):
@@ -1763,10 +1763,12 @@ def test_tensor_mean_method(device: str, tensor_shapes: tuple):
 
     a = torch.randn(tensor_shapes)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
-def test_tensor_mean_method_with_dim(device: str, tensor_shapes: tuple):
+def test_tensor_mean_method_with_dim(
+    device: str, tensor_shapes: tuple, compiler_to_use
+):
     """Test tensor.mean(dim) method"""
 
     def fn(x):
@@ -1774,28 +1776,30 @@ def test_tensor_mean_method_with_dim(device: str, tensor_shapes: tuple):
 
     a = torch.randn(tensor_shapes) if len(tensor_shapes) > 1 else torch.randn(3, 4)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
-def test_mean_3d_tensor(device: str):
+def test_mean_3d_tensor(device: str, compiler_to_use):
     def fn(x):
         return torch.mean(x, dim=1)
 
     a = torch.randn(2, 3, 4)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
-def test_mean_3d_tensor_change_dtype(device: str):
+def test_mean_3d_tensor_change_dtype(device: str, compiler_to_use):
     def fn(x):
         return torch.mean(x, dim=1, dtype=torch.float32)
 
     a = torch.randn(2, 3, 4).to(torch.int32)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
-def test_mean_combined_with_arithmetic(device: str, tensor_shapes: tuple):
+def test_mean_combined_with_arithmetic(
+    device: str, tensor_shapes: tuple, compiler_to_use
+):
     """Test mean combined with arithmetic operations"""
 
     def fn(x, y):
@@ -1811,7 +1815,7 @@ def test_mean_combined_with_arithmetic(device: str, tensor_shapes: tuple):
         y_shape[-1] = 1  # Make last dimension 1 for broadcasting
         y = torch.randn(y_shape)
 
-    check_functions_are_equivalent(fn, device, [a, y])
+    check_functions_are_equivalent(fn, device, [a, y], compiler=compiler_to_use)
 
 
 def test_rsqrt_function(device: str, compiler_to_use):
@@ -1902,7 +1906,7 @@ def test_sqrt_with_ones(device: str, compiler_to_use):
     check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_rsqrt_with_powers_of_two(device: str):
+def test_rsqrt_with_powers_of_two(device: str, compiler_to_use):
     """Test rsqrt with powers of 2 for exact mathematical results"""
 
     def fn(x):
@@ -1910,7 +1914,7 @@ def test_rsqrt_with_powers_of_two(device: str):
 
     x = torch.tensor([1.0, 4.0, 16.0, 64.0])  # Powers of 2
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_sqrt_with_perfect_squares(device: str, compiler_to_use):
@@ -1924,18 +1928,18 @@ def test_sqrt_with_perfect_squares(device: str, compiler_to_use):
     check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_rsqrt_sqrt_relationship(device: str):
-    """Test mathematical relationship: rsqrt(x) * sqrt(x) should equal 1"""
+def test_rsqrt_sqrt_relationship(device: str, compiler_to_use):
+    """Test mathematical relationship: rsqrt(x) * sqrt(x) should equal x"""
 
     def fn(x):
         return torch.rsqrt(x) * torch.sqrt(x)
 
     x = torch.randn(3, 4).abs() + 0.1
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_rsqrt_combined_with_arithmetic(device: str):
+def test_rsqrt_combined_with_arithmetic(device: str, compiler_to_use):
     """Test rsqrt combined with arithmetic operations"""
 
     def fn(x, y):
@@ -1945,7 +1949,7 @@ def test_rsqrt_combined_with_arithmetic(device: str):
     x = torch.randn(3, 4).abs() + 0.1
     y = torch.randn(3, 4)
 
-    check_functions_are_equivalent(fn, device, [x, y])
+    check_functions_are_equivalent(fn, device, [x, y], compiler=compiler_to_use)
 
 
 def test_sqrt_combined_with_arithmetic(device: str, compiler_to_use):
@@ -1973,7 +1977,7 @@ def test_chained_sqrt_rsqrt_operations(device: str, compiler_to_use):
     check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_rsqrt_with_trigonometric_functions(device: str):
+def test_rsqrt_with_trigonometric_functions(device: str, compiler_to_use):
     """Test rsqrt combined with trigonometric functions"""
 
     def fn(x):
@@ -1982,7 +1986,7 @@ def test_rsqrt_with_trigonometric_functions(device: str):
 
     x = torch.randn(3, 4).abs() + 0.1
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_sqrt_with_trigonometric_functions(device: str, compiler_to_use):
@@ -1997,7 +2001,7 @@ def test_sqrt_with_trigonometric_functions(device: str, compiler_to_use):
     check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_tensor_methods_chain_sqrt_rsqrt(device: str):
+def test_tensor_methods_chain_sqrt_rsqrt(device: str, compiler_to_use):
     """Test chaining tensor methods with sqrt and rsqrt"""
 
     def fn(x):
@@ -2005,7 +2009,7 @@ def test_tensor_methods_chain_sqrt_rsqrt(device: str):
 
     x = torch.randn(3, 4)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_sqrt_rsqrt_with_transpose(device: str, compiler_to_use):
