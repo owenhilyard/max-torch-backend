@@ -1130,6 +1130,15 @@ def torch_clone_equivalent(input, memory_format=None):
     return input
 
 
+def torch_squeeze_equivalent(input, dim):
+    if isinstance(dim, int):
+        dim = [dim]
+    result = input
+    for d in sorted(dim, reverse=True):
+        result = max_ops.squeeze(input, axis=d)
+    return result
+
+
 IDENTICAL_FUNCTIONS = [
     operator.add,
     operator.sub,
@@ -1273,6 +1282,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.repeat_interleave: torch_repeat_interleave_equivalent,
     aten.minimum: max_ops.min,
     aten.maximum: max_ops.max,
+    aten.squeeze: torch_squeeze_equivalent,
     aten.unsqueeze: torch_unsqueeze_equivalent,
     aten.argmin: torch_argmin_equivalent,
     aten.argmax: torch_argmax_equivalent,

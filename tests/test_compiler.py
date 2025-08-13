@@ -3761,12 +3761,12 @@ def test_unbind_basic(device: str):
     check_functions_are_equivalent(fn, device, [input_tensor])
 
 
-def test_unbind_different_dim(device: str):
+def test_unbind_different_dim(device: str, compiler_to_use):
     def fn(x):
         return list(x.unbind(dim=1))
 
     input_tensor = torch.randn(2, 3, 4)
-    check_functions_are_equivalent(fn, device, [input_tensor])
+    check_functions_are_equivalent(fn, device, [input_tensor], compiler=compiler_to_use)
 
 
 def test_unbind_negative_dim(device: str):
