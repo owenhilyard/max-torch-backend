@@ -353,16 +353,16 @@ def test_builtin_min_max(device: str, func):
     ],
 )
 def test_torch_amin_amax_single_element_options(
-    device: str, shapes, dims, keepdim, func
+    device: str, shapes, dims, keepdim, func, compiler_to_use
 ):
     """Only works with a single element."""
 
     def fn(x):
-        return func(x, dim=dims, keepdim=keepdim)
+        return func(x, dims, keepdim=keepdim)
 
     a = torch.randn(shapes)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
 @pytest.mark.parametrize("keepdim", [True, False])
@@ -465,7 +465,7 @@ def test_torch_max_elementwise(
 
 
 @pytest.mark.parametrize("func", [torch.minimum, torch.maximum])
-def test_minimum_maximum(device: str, tensor_shapes: tuple, func):
+def test_minimum_maximum(device: str, tensor_shapes: tuple, func, compiler_to_use):
     """Only works with elementwise min/max of two tensors."""
 
     def fn(x, y):
@@ -474,7 +474,7 @@ def test_minimum_maximum(device: str, tensor_shapes: tuple, func):
     a = torch.randn(tensor_shapes)
     b = torch.randn(tensor_shapes)
 
-    check_functions_are_equivalent(fn, device, [a, b])
+    check_functions_are_equivalent(fn, device, [a, b], compiler=compiler_to_use)
 
 
 def test_relu(device: str, tensor_shapes: tuple, compiler_to_use):
@@ -3382,7 +3382,7 @@ def test_split_single_element(device: str):
 
 
 @pytest.mark.parametrize("shapes", [(8,), (3, 4), (2, 3, 4)])
-def test_torch_clamp_both_bounds(device: str, shapes):
+def test_torch_clamp_both_bounds(device: str, shapes, compiler_to_use):
     """Test torch.clamp with both min and max bounds."""
 
     def fn(x):
@@ -3390,7 +3390,7 @@ def test_torch_clamp_both_bounds(device: str, shapes):
 
     a = torch.randn(shapes)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
 @pytest.mark.parametrize("shapes", [(8,), (3, 4), (2, 3, 4)])

@@ -550,9 +550,9 @@ def torch_repeat_interleave_equivalent(
     return result
 
 
-def torch_amax_equivalent(input, dim, keepdim=False, *, out=None):
+def torch_amax_equivalent(input, dim=None, keepdim=False, *, out=None):
     # If only input is provided, we find the maximum along the specified dimension
-    if dim is None:
+    if not dim:
         dim = [i for i in range(len(input.shape))]
     elif isinstance(dim, int):
         dim = [dim]
@@ -568,9 +568,9 @@ def torch_amax_equivalent(input, dim, keepdim=False, *, out=None):
     return result
 
 
-def torch_amin_equivalent(input, dim, keepdim=False, *, out=None):
+def torch_amin_equivalent(input, dim=None, keepdim=False, *, out=None):
     # If only input is provided, we find the minimum along the specified dimension
-    if dim is None:
+    if not dim:
         dim = [i for i in range(len(input.shape))]
     elif isinstance(dim, int):
         dim = [dim]
