@@ -1057,6 +1057,16 @@ def torch_slice_equivalent(input, dim, start: int, end: int, step: int = 1):
     return input[*slices]
 
 
+def torch_split_with_sizes_equivalent(input, split_sizes, dim=0):
+    result = []
+    start = 0
+    for size in split_sizes:
+        end = start + size
+        result.append(torch_slice_equivalent(input, dim, start, end))
+        start = end
+    return result
+
+
 def identity(x):
     return x
 
@@ -1212,6 +1222,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.slice: torch_slice_equivalent,
     aten.expand: torch_aten_expand_equivalent,
     aten.alias: identity,
+    aten.split_with_sizes: torch_split_with_sizes_equivalent,
     "view": torch_view_equivalent,
     "contiguous": torch_contiguous_equivalent,
     "unsqueeze": torch_unsqueeze_equivalent,

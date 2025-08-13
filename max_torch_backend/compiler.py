@@ -218,7 +218,10 @@ class _GraphFactory:
 
         if key not in MAPPING_TORCH_TO_MOJO_FUNCTIONS:
             raise ValueError(
-                f"Failing at node {node_idx}. Function {get_fully_qualified_name(node.target)}  not supported by the Max backend yet."
+                f"Failing at node {node_idx}. Function {get_fully_qualified_name(node.target)}  "
+                f"not supported by the Max backend yet. "
+                f"inputs of node were: args={func_args}, kwargs={func_kwargs}. It comes from there in your code: \n"
+                f"{node.stack_trace}"
             )
 
         try:

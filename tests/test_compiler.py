@@ -3378,7 +3378,18 @@ def test_split_basic(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_split_uneven(device: str):
+def test_split_uneven_second_dim(device: str, compiler_to_use):
+    """Test tensor splitting with uneven split sizes"""
+
+    def fn(x):
+        return torch.split(x, 3, 1)
+
+    # 7 elements split by 3 should give splits of [3, 3, 1]
+    x = torch.randn(2, 7)
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
+
+
+def test_split_uneven(device: str, compiler_to_use):
     """Test tensor splitting with uneven split sizes"""
 
     def fn(x):
@@ -3386,7 +3397,7 @@ def test_split_uneven(device: str):
 
     # 7 elements split by 3 should give splits of [3, 3, 1]
     x = torch.randn(7, 4)
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_split_different_dims(device: str):
@@ -3404,14 +3415,14 @@ def test_split_different_dims(device: str):
     check_functions_are_equivalent(fn_dim1, device, [x])
 
 
-def test_split_single_element(device: str):
+def test_split_single_element(device: str, compiler_to_use):
     """Test tensor splitting into single elements"""
 
     def fn(x):
         return torch.split(x, 1, 0)
 
     x = torch.randn(3, 2)
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 @pytest.mark.parametrize("shapes", [(8,), (3, 4), (2, 3, 4)])
