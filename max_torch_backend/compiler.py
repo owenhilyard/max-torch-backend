@@ -309,7 +309,7 @@ def deviceref_to_torch(device_ref: DeviceRef) -> torch.device:
         raise TypeError(f"Unable to convert {device_ref} to a PyTorch device.")
 
 
-class MaxCompiler:
+class BaseMaxCompiler:
     def __init__(
         self, gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor], mode=None
     ):
@@ -341,8 +341,10 @@ class MaxCompiler:
 def _MaxCompilerBackpropCompatible(
     gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor], mode=None
 ):
-    _max_compiler = MaxCompiler(gm, example_inputs)
+    _max_compiler = BaseMaxCompiler(gm, example_inputs)
     return make_boxed_func(_max_compiler.__call__)
 
 
-MaxCompilerBackpropCompatible = aot_autograd(fw_compiler=_MaxCompilerBackpropCompatible)
+MaxCompiler = aot_autograd(fw_compiler=_MaxCompilerBackpropCompatible)
+
+OldCompiler = BaseMaxCompiler

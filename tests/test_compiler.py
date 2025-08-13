@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 from collections.abc import Callable
-from max_torch_backend import MaxCompiler, MaxCompilerBackpropCompatible
+from max_torch_backend import MaxCompiler
 import pytest
 from torch._dynamo import mark_dynamic
 import io
@@ -105,10 +105,7 @@ def test_basic_training(device: str):
     model.linear.bias.data.fill_(0.01)
 
     loss_compiled = (
-        torch.compile(backend=MaxCompilerBackpropCompatible)(train_step)(a, b)
-        .cpu()
-        .detach()
-        .numpy()
+        torch.compile(backend=MaxCompiler)(train_step)(a, b).cpu().detach().numpy()
     )
     weight_compiled = model.linear.weight.data.cpu().numpy()
     bias_compiled = model.linear.bias.data.cpu().numpy()

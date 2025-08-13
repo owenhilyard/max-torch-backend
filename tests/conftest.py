@@ -1,10 +1,6 @@
 import pytest
 import torch
-from max_torch_backend import (
-    get_accelerators,
-    MaxCompiler,
-    MaxCompilerBackpropCompatible,
-)
+from max_torch_backend import get_accelerators, MaxCompiler, OldCompiler
 
 
 @pytest.fixture(params=["cpu", "cuda"])
@@ -31,7 +27,7 @@ def reset_compiler():
     yield
 
 
-@pytest.fixture(params=[MaxCompiler, MaxCompilerBackpropCompatible])
+@pytest.fixture(params=[MaxCompiler, OldCompiler])
 def compiler_to_use(request):
     # pytest.skip("dodo")
     yield request.param
