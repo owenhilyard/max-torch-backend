@@ -142,6 +142,10 @@ def torch_float_equivalent(tensor):
     return max_ops.cast(tensor, dtype=max_type.DType.float32)
 
 
+def torch_aten_expand_equivalent(tensor, size: list[int]):
+    return torch_expand_equivalent(tensor, *size)
+
+
 def torch_expand_equivalent(tensor, *size):
     # Convert size tuple to list and handle -1 values
     target_shape = []
@@ -1202,6 +1206,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.select: torch_select_equivalent,
     aten._to_copy: torch_to_equivalent,
     aten.slice: torch_slice_equivalent,
+    aten.expand: torch_aten_expand_equivalent,
     "view": torch_view_equivalent,
     "contiguous": torch_contiguous_equivalent,
     "unsqueeze": torch_unsqueeze_equivalent,

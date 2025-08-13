@@ -1005,7 +1005,7 @@ def test_to_float(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_expand_basic(device: str):
+def test_expand_basic(device: str, compiler_to_use):
     """Test basic expand operation"""
 
     def fn(x):
@@ -1013,10 +1013,10 @@ def test_expand_basic(device: str):
 
     x = torch.randn(1, 4)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_expand_with_negative_one(device: str):
+def test_expand_with_negative_one(device: str, compiler_to_use):
     """Test expand with -1 (keep dimension unchanged)"""
 
     def fn(x):
@@ -1024,10 +1024,10 @@ def test_expand_with_negative_one(device: str):
 
     x = torch.randn(3, 1)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_expand_multiple_dims(device: str):
+def test_expand_multiple_dims(device: str, compiler_to_use):
     """Test expand on tensor with multiple dimensions"""
 
     def fn(x):
@@ -1035,10 +1035,10 @@ def test_expand_multiple_dims(device: str):
 
     x = torch.randn(1, 1, 4)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_expand_same_size(device: str):
+def test_expand_same_size(device: str, compiler_to_use):
     """Test expand to same size (should be no-op)"""
 
     def fn(x):
@@ -1046,10 +1046,10 @@ def test_expand_same_size(device: str):
 
     x = torch.randn(2, 3)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_expand_add_dimensions(device: str):
+def test_expand_add_dimensions(device: str, compiler_to_use):
     """Test expand adding new leading dimensions"""
 
     def fn(x):
@@ -1057,10 +1057,10 @@ def test_expand_add_dimensions(device: str):
 
     x = torch.randn(4)  # 1D tensor
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_expand_mixed_operations(device: str):
+def test_expand_mixed_operations(device: str, compiler_to_use):
     """Test expand combined with arithmetic operations"""
 
     def fn(x, y):
@@ -1070,10 +1070,10 @@ def test_expand_mixed_operations(device: str):
     x = torch.randn(1, 3)
     y = torch.randn(2, 3)
 
-    check_functions_are_equivalent(fn, device, [x, y])
+    check_functions_are_equivalent(fn, device, [x, y], compiler=compiler_to_use)
 
 
-def test_expand_with_scalar_broadcast(device: str):
+def test_expand_with_scalar_broadcast(device: str, compiler_to_use):
     """Test expand from scalar dimension"""
 
     def fn(x):
@@ -1081,10 +1081,10 @@ def test_expand_with_scalar_broadcast(device: str):
 
     x = torch.randn(1, 1)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_expand_complex_pattern(device: str):
+def test_expand_complex_pattern(device: str, compiler_to_use):
     """Test expand with complex dimension pattern"""
 
     def fn(x):
@@ -1092,7 +1092,7 @@ def test_expand_complex_pattern(device: str):
 
     x = torch.randn(1, 3, 1, 5)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_transpose_2d(device: str, compiler_to_use):
