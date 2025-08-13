@@ -328,7 +328,7 @@ def test_stack_3d(device: str, compiler_to_use):
 
 
 @pytest.mark.parametrize("func", [min, max])
-def test_builtin_min_max(device: str, func):
+def test_builtin_min_max(device: str, func, compiler_to_use):
     """Only works with a single dimension."""
 
     def fn(x):
@@ -336,7 +336,7 @@ def test_builtin_min_max(device: str, func):
 
     a = torch.randn((9,))
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
 @pytest.mark.parametrize("keepdim", [True, False])

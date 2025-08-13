@@ -494,25 +494,10 @@ def torch_select_equivalent(input: max_ops.TensorType, dim: int, index: int):
     """
     Equivalent to torch.select - selects a slice of the tensor along the given dimension at the given index.
     """
-    # Handle negative dim
-    if dim < 0:
-        dim = len(input.shape) + dim
-
-    # Handle negative index
-    if index < 0:
-        index = int(input.shape[dim]) + index
-
-    # Create slice bounds for all dimensions
-    start = [0] * len(input.shape)
-    end = [int(s) for s in input.shape]  # Use the full size for other dimensions
-
-    # Set the specific dimension to select just one index
-    start[dim] = index
-    end[dim] = index + 1
-
-    # Use slice_tensor to get the specific index, then squeeze to remove the dimension
-    sliced = max_ops.slice_tensor(input, start, end)
-    return max_ops.squeeze(sliced, axis=dim)
+    nb_dims = len(input.shape)
+    slices = [slice(None)] * nb_dims
+    slices[dim] = index
+    return input[slices]
 
 
 def torch_repeat_interleave_equivalent(
