@@ -701,7 +701,7 @@ def test_conv2d_dilation_tuple(device: str):
     check_functions_are_equivalent(fn, device, [x, w])
 
 
-def test_conv2d_all_params(device: str):
+def test_conv2d_all_params(device: str, compiler_to_use):
     """Test conv2d with all parameters specified"""
 
     def fn(x, w, b):
@@ -714,10 +714,10 @@ def test_conv2d_all_params(device: str):
     w = torch.randn(out_channels, in_channels, kernel_size, kernel_size)
     b = torch.randn(out_channels)
 
-    check_functions_are_equivalent(fn, device, [x, w, b])
+    check_functions_are_equivalent(fn, device, [x, w, b], compiler=compiler_to_use)
 
 
-def test_conv2d_1x1_kernel(device: str):
+def test_conv2d_1x1_kernel(device: str, compiler_to_use):
     """Test conv2d with 1x1 kernel (pointwise convolution)"""
 
     def fn(x, w):
@@ -729,7 +729,7 @@ def test_conv2d_1x1_kernel(device: str):
     x = torch.randn(batch_size, in_channels, height, width)
     w = torch.randn(out_channels, in_channels, 1, 1)
 
-    check_functions_are_equivalent(fn, device, [x, w])
+    check_functions_are_equivalent(fn, device, [x, w], compiler=compiler_to_use)
 
 
 def test_conv2d_large_kernel(device: str):
@@ -747,7 +747,7 @@ def test_conv2d_large_kernel(device: str):
     check_functions_are_equivalent(fn, device, [x, w])
 
 
-def test_conv2d_asymmetric_kernel(device: str):
+def test_conv2d_asymmetric_kernel(device: str, compiler_to_use):
     """Test conv2d with asymmetric kernel"""
 
     def fn(x, w):
@@ -759,10 +759,10 @@ def test_conv2d_asymmetric_kernel(device: str):
     x = torch.randn(batch_size, in_channels, height, width)
     w = torch.randn(out_channels, in_channels, 3, 5)  # 3x5 kernel
 
-    check_functions_are_equivalent(fn, device, [x, w])
+    check_functions_are_equivalent(fn, device, [x, w], compiler=compiler_to_use)
 
 
-def test_conv2d_different_input_sizes(device: str):
+def test_conv2d_different_input_sizes(device: str, compiler_to_use):
     """Test conv2d with different input tensor sizes"""
 
     def fn(x, w):
@@ -777,10 +777,10 @@ def test_conv2d_different_input_sizes(device: str):
         x = torch.randn(batch_size, in_channels, height, width)
         w = torch.randn(out_channels, in_channels, kernel_size, kernel_size)
 
-        check_functions_are_equivalent(fn, device, [x, w])
+        check_functions_are_equivalent(fn, device, [x, w], compiler=compiler_to_use)
 
 
-def test_conv2d_edge_cases(device: str):
+def test_conv2d_edge_cases(device: str, compiler_to_use):
     """Test conv2d edge cases"""
 
     # Single pixel output
@@ -793,10 +793,10 @@ def test_conv2d_edge_cases(device: str):
     x = torch.randn(batch_size, in_channels, 3, 3)  # Exactly kernel size
     w = torch.randn(out_channels, in_channels, kernel_size, kernel_size)
 
-    check_functions_are_equivalent(fn1, device, [x, w])
+    check_functions_are_equivalent(fn1, device, [x, w], compiler=compiler_to_use)
 
 
-def test_conv2d_combined_with_other_ops(device: str):
+def test_conv2d_combined_with_other_ops(device: str, compiler_to_use):
     """Test conv2d combined with other operations"""
 
     def fn(x, w, b, y):
@@ -812,7 +812,7 @@ def test_conv2d_combined_with_other_ops(device: str):
     # y should have same shape as conv output: (2, 4, 8, 8)
     y = torch.randn(batch_size, out_channels, height, width)
 
-    check_functions_are_equivalent(fn, device, [x, w, b, y])
+    check_functions_are_equivalent(fn, device, [x, w, b, y], compiler=compiler_to_use)
 
 
 def test_embedding_basic(device: str):
@@ -1415,7 +1415,7 @@ def test_change_device_to_cpu_by_device(device: str, compiler_to_use):
     check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_change_device_to_cuda(device: str, gpu_available: bool):
+def test_change_device_to_cuda(device: str, gpu_available: bool, compiler_to_use):
     """Test changing device to CUDA"""
     if not gpu_available:
         pytest.skip("CUDA not available")
@@ -1425,10 +1425,12 @@ def test_change_device_to_cuda(device: str, gpu_available: bool):
 
     x = torch.randn(1, 3)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_change_device_to_cuda_by_device(device: str, gpu_available: bool):
+def test_change_device_to_cuda_by_device(
+    device: str, gpu_available: bool, compiler_to_use
+):
     """Test changing device to CUDA"""
     if not gpu_available:
         pytest.skip("CUDA not available")
@@ -1438,7 +1440,7 @@ def test_change_device_to_cuda_by_device(device: str, gpu_available: bool):
 
     x = torch.randn(1, 3)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_to_with_dtype_keyword(device: str):
@@ -1580,7 +1582,7 @@ def test_autocast_enter_exit(compiler_to_use):
     check_functions_are_equivalent(fn, "cpu", [x], compiler=compiler_to_use)
 
 
-def test_complex_to_operations(device: str):
+def test_complex_to_operations(device: str, compiler_to_use):
     """Test complex combinations of .to() operations"""
 
     def fn(x):
@@ -1591,7 +1593,7 @@ def test_complex_to_operations(device: str):
 
     x = torch.randint(1, 5, (2, 3))
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 class MaxCompilerCallCount:
