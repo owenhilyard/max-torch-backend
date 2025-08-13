@@ -332,7 +332,7 @@ def relu_equivalent(tensor, inplace: bool = False):
 
 
 def torch_max_pool2d_with_indices_equivalent(
-    input, kernel_size, stride, padding=0, dilation=1, ceil_mode=False
+    input, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False
 ) -> tuple[max_ops.TensorType, max_ops.TensorType]:
     # the first output is the values, the second output is the indices
     # most of the time people just want the values so we'll implement that
@@ -362,7 +362,7 @@ def torch_max_pool2d_equivalent(
     if return_indices:
         raise NotImplementedError("return_indices=True is not supported yet")
 
-    if stride is None:
+    if not stride:
         stride = kernel_size
 
     if isinstance(kernel_size, int):

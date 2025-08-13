@@ -3012,7 +3012,7 @@ def test_no_graph_breaks_with_supported_operations(device: str):
     check_functions_are_equivalent(well_supported_fn, device, [x, y])
 
 
-def test_max_pool2d_basic(device: str):
+def test_max_pool2d_basic(device: str, compiler_to_use):
     """Test basic max_pool2d operation"""
 
     def fn(x):
@@ -3021,7 +3021,7 @@ def test_max_pool2d_basic(device: str):
     batch_size, channels, height, width = 2, 3, 8, 8
     x = torch.randn(batch_size, channels, height, width)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_max_pool2d_with_stride(device: str):
@@ -3036,7 +3036,7 @@ def test_max_pool2d_with_stride(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_max_pool2d_with_padding(device: str):
+def test_max_pool2d_with_padding(device: str, compiler_to_use):
     """Test max_pool2d with padding"""
 
     def fn(x):
@@ -3045,7 +3045,7 @@ def test_max_pool2d_with_padding(device: str):
     batch_size, channels, height, width = 2, 3, 6, 6
     x = torch.randn(batch_size, channels, height, width)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_max_pool2d_asymmetric_kernel(device: str, compiler_to_use):
@@ -3226,7 +3226,7 @@ def test_max_pool2d_ceil_mode(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_max_pool2d_with_conv2d_chain(device: str):
+def test_max_pool2d_with_conv2d_chain(device: str, compiler_to_use):
     """Test max_pool2d chained with conv2d operations"""
 
     def fn(x, weight1, bias1, weight2, bias2):
@@ -3246,7 +3246,9 @@ def test_max_pool2d_with_conv2d_chain(device: str):
     weight2 = torch.randn(out_channels, hidden_channels, 3, 3)
     bias2 = torch.randn(out_channels)
 
-    check_functions_are_equivalent(fn, device, [x, weight1, bias1, weight2, bias2])
+    check_functions_are_equivalent(
+        fn, device, [x, weight1, bias1, weight2, bias2], compiler=compiler_to_use
+    )
 
 
 def test_flatten_after_pooling(device: str, compiler_to_use):
