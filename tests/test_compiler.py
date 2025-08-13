@@ -734,7 +734,7 @@ def test_conv2d_1x1_kernel(device: str, compiler_to_use):
     check_functions_are_equivalent(fn, device, [x, w], compiler=compiler_to_use)
 
 
-def test_conv2d_large_kernel(device: str):
+def test_conv2d_large_kernel(device: str, compiler_to_use):
     """Test conv2d with larger kernel"""
 
     def fn(x, w):
@@ -746,7 +746,7 @@ def test_conv2d_large_kernel(device: str):
     x = torch.randn(batch_size, in_channels, height, width)
     w = torch.randn(out_channels, in_channels, kernel_size, kernel_size)
 
-    check_functions_are_equivalent(fn, device, [x, w])
+    check_functions_are_equivalent(fn, device, [x, w], compiler=compiler_to_use)
 
 
 def test_conv2d_asymmetric_kernel(device: str, compiler_to_use):
