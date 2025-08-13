@@ -33,4 +33,5 @@ def reset_compiler():
 
 @pytest.fixture(params=[MaxCompiler, MaxCompilerBackpropCompatible])
 def compiler_to_use(request):
+    # pytest.skip("dodo")
     yield request.param

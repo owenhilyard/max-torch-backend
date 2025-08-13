@@ -379,7 +379,7 @@ def test_torch_argmax(device: str, shapes, dims, keepdim):
 
 
 @pytest.mark.parametrize("shapes", [(8,), (3, 4), (2, 3, 4), (5, 6, 2, 3)])
-def test_torch_argmax_no_dim(device: str, shapes):
+def test_torch_argmax_no_dim(device: str, shapes, compiler_to_use):
     """Test argmax with only tensor argument (no dim parameter)."""
 
     def fn(x):
@@ -387,7 +387,7 @@ def test_torch_argmax_no_dim(device: str, shapes):
 
     a = torch.randn(shapes)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
 @pytest.mark.parametrize("keepdim", [True, False])
@@ -404,7 +404,7 @@ def test_torch_argmin(device: str, shapes, dims, keepdim):
 
 
 @pytest.mark.parametrize("shapes", [(8,), (3, 4), (2, 3, 4), (5, 6, 2, 3)])
-def test_torch_argmin_no_dim(device: str, shapes):
+def test_torch_argmin_no_dim(device: str, shapes, compiler_to_use):
     """Test argmin with only tensor argument (no dim parameter)."""
 
     def fn(x):
@@ -412,18 +412,18 @@ def test_torch_argmin_no_dim(device: str, shapes):
 
     a = torch.randn(shapes)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
 @pytest.mark.parametrize("func", [torch.min, torch.max])
 @pytest.mark.parametrize("shapes", [(8,), (3, 4), (2, 3, 4), (5, 6, 2, 3)])
-def test_torch_max_single_value(device: str, shapes, func):
+def test_torch_max_single_value(device: str, shapes, func, compiler_to_use):
     def fn(x):
         return func(x)
 
     a = torch.randn(shapes)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
 @pytest.mark.parametrize("func", [torch.min, torch.max])
@@ -440,13 +440,15 @@ def test_torch_max_with_dim(device: str, shapes, dims, keepdim, func):
 
 @pytest.mark.parametrize("func", [torch.min, torch.max])
 @pytest.mark.parametrize("shapes,dims", [((8,), 0), ((2, 3, 4), -1)])
-def test_torch_max_with_dim_positional(device: str, shapes, dims, func):
+def test_torch_max_with_dim_positional(
+    device: str, shapes, dims, func, compiler_to_use
+):
     def fn(x):
         return func(x, dims)
 
     a = torch.randn(shapes)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
 @pytest.mark.parametrize("func", [torch.min, torch.max])
@@ -1331,7 +1333,7 @@ def test_tensor_pow_fractional_exponent(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_tensor_pow_with_arithmetic(device: str):
+def test_tensor_pow_with_arithmetic(device: str, compiler_to_use):
     """Test tensor.pow() combined with arithmetic operations"""
 
     def fn(x, y, z):
@@ -1341,7 +1343,7 @@ def test_tensor_pow_with_arithmetic(device: str):
     y = torch.randn(3, 4) * 2
     z = torch.randn(3, 4)
 
-    check_functions_are_equivalent(fn, device, [x, y, z])
+    check_functions_are_equivalent(fn, device, [x, y, z], compiler=compiler_to_use)
 
 
 def test_tensor_pow_chained(device: str):
@@ -1367,7 +1369,9 @@ def test_tensor_pow_broadcast(device: str):
     check_functions_are_equivalent(fn, device, [x, y])
 
 
-def test_tensor_pow_different_shapes(device: str, tensor_shapes: tuple):
+def test_tensor_pow_different_shapes(
+    device: str, tensor_shapes: tuple, compiler_to_use
+):
     """Test tensor.pow() with different tensor shapes"""
 
     def fn(x):
@@ -1375,7 +1379,7 @@ def test_tensor_pow_different_shapes(device: str, tensor_shapes: tuple):
 
     x = torch.randn(tensor_shapes)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_tensor_pow_with_other_methods(device: str):
@@ -1683,7 +1687,7 @@ def test_mean_negative_dim(device: str, tensor_shapes: tuple):
     check_functions_are_equivalent(fn, device, [a])
 
 
-def test_mean_keepdim_true(device: str, tensor_shapes: tuple):
+def test_mean_keepdim_true(device: str, tensor_shapes: tuple, compiler_to_use):
     """Test mean with keepdim=True"""
 
     def fn(x):
@@ -1691,7 +1695,7 @@ def test_mean_keepdim_true(device: str, tensor_shapes: tuple):
 
     a = torch.randn(tensor_shapes) if len(tensor_shapes) > 1 else torch.randn(3, 4)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
 def test_mean_multiple_dims(device: str):
