@@ -369,8 +369,6 @@ def test_torch_amin_amax_single_element_options(
 @pytest.mark.parametrize("shapes,dims", [((8,), 0), ((2, 3, 4), -1), ((2, 3, 4), None)])
 def test_torch_argmax(device: str, shapes, dims, keepdim):
     """Test argmax with various dimensions and keepdim options."""
-    if device == "cuda":
-        pytest.xfail("ValueError: GPU reduction currently limited to inner axis.")
 
     def fn(x):
         return torch.argmax(x, dim=dims, keepdim=keepdim)
@@ -383,8 +381,6 @@ def test_torch_argmax(device: str, shapes, dims, keepdim):
 @pytest.mark.parametrize("shapes", [(8,), (3, 4), (2, 3, 4), (5, 6, 2, 3)])
 def test_torch_argmax_no_dim(device: str, shapes):
     """Test argmax with only tensor argument (no dim parameter)."""
-    if device == "cuda":
-        pytest.xfail("ValueError: GPU reduction currently limited to inner axis.")
 
     def fn(x):
         return torch.argmax(x)
@@ -398,8 +394,6 @@ def test_torch_argmax_no_dim(device: str, shapes):
 @pytest.mark.parametrize("shapes,dims", [((8,), 0), ((2, 3, 4), -1), ((2, 3, 4), None)])
 def test_torch_argmin(device: str, shapes, dims, keepdim):
     """Test argmin with various dimensions and keepdim options."""
-    if device == "cuda":
-        pytest.xfail("ValueError: GPU reduction currently limited to inner axis.")
 
     def fn(x):
         return torch.argmin(x, dim=dims, keepdim=keepdim)
@@ -412,8 +406,6 @@ def test_torch_argmin(device: str, shapes, dims, keepdim):
 @pytest.mark.parametrize("shapes", [(8,), (3, 4), (2, 3, 4), (5, 6, 2, 3)])
 def test_torch_argmin_no_dim(device: str, shapes):
     """Test argmin with only tensor argument (no dim parameter)."""
-    if device == "cuda":
-        pytest.xfail("ValueError: GPU reduction currently limited to inner axis.")
 
     def fn(x):
         return torch.argmin(x)
@@ -426,9 +418,6 @@ def test_torch_argmin_no_dim(device: str, shapes):
 @pytest.mark.parametrize("func", [torch.min, torch.max])
 @pytest.mark.parametrize("shapes", [(8,), (3, 4), (2, 3, 4), (5, 6, 2, 3)])
 def test_torch_max_single_value(device: str, shapes, func):
-    if device == "cuda":
-        pytest.xfail("ValueError: GPU reduction currently limited to inner axis.")
-
     def fn(x):
         return func(x)
 
@@ -441,9 +430,6 @@ def test_torch_max_single_value(device: str, shapes, func):
 @pytest.mark.parametrize("keepdim", [True, False])
 @pytest.mark.parametrize("shapes,dims", [((8,), 0), ((2, 3, 4), -1)])
 def test_torch_max_with_dim(device: str, shapes, dims, keepdim, func):
-    if device == "cuda":
-        pytest.xfail("ValueError: GPU reduction currently limited to inner axis.")
-
     def fn(x):
         return func(x, dim=dims, keepdim=keepdim)
 
@@ -455,9 +441,6 @@ def test_torch_max_with_dim(device: str, shapes, dims, keepdim, func):
 @pytest.mark.parametrize("func", [torch.min, torch.max])
 @pytest.mark.parametrize("shapes,dims", [((8,), 0), ((2, 3, 4), -1)])
 def test_torch_max_with_dim_positional(device: str, shapes, dims, func):
-    if device == "cuda":
-        pytest.xfail("ValueError: GPU reduction currently limited to inner axis.")
-
     def fn(x):
         return func(x, dims)
 
@@ -1739,9 +1722,6 @@ def test_mean_multiple_dims_keepdim(device: str):
 def test_tensor_mean_method(device: str, tensor_shapes: tuple):
     """Test tensor.mean() method"""
 
-    if device == "cuda":
-        pytest.xfail("GPU reduction currently limited to inner axis.")
-
     def fn(x):
         return x.mean()
 
@@ -1762,9 +1742,6 @@ def test_tensor_mean_method_with_dim(device: str, tensor_shapes: tuple):
 
 
 def test_mean_3d_tensor(device: str):
-    if device == "cuda":
-        pytest.xfail("GPU reduction currently limited to inner axis.")
-
     def fn(x):
         return torch.mean(x, dim=1)
 
@@ -1774,9 +1751,6 @@ def test_mean_3d_tensor(device: str):
 
 
 def test_mean_3d_tensor_change_dtype(device: str):
-    if device == "cuda":
-        pytest.xfail("GPU reduction currently limited to inner axis.")
-
     def fn(x):
         return torch.mean(x, dim=1, dtype=torch.float32)
 
@@ -3035,9 +3009,6 @@ def test_max_pool2d_various_sizes(device: str):
 
 def test_adaptive_avg_pool2d_global(device: str):
     """Test adaptive_avg_pool2d with (1, 1) output (global pooling)"""
-
-    if device == "cuda":
-        pytest.xfail("ValueError: GPU reduction currently limited to inner axis.")
 
     def fn(x):
         return F.adaptive_avg_pool2d(x, (1, 1))
