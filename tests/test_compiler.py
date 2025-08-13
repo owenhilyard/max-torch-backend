@@ -3607,12 +3607,12 @@ def test_sum_multiple_dims_keepdim(device: str):
     check_functions_are_equivalent(fn, device, [input_tensor])
 
 
-def test_sum_negative_dim(device: str):
+def test_sum_negative_dim(device: str, compiler_to_use):
     def fn(x):
         return torch.sum(x, dim=-1)
 
     input_tensor = torch.randn(3, 4, 5)
-    check_functions_are_equivalent(fn, device, [input_tensor])
+    check_functions_are_equivalent(fn, device, [input_tensor], compiler=compiler_to_use)
 
 
 def test_masked_fill_basic(device: str):
@@ -3753,7 +3753,7 @@ def test_silu_activation(device: str):
     check_functions_are_equivalent(fn, device, [input_tensor])
 
 
-def test_mse_loss_default_reduction(device: str):
+def test_mse_loss_default_reduction(device: str, compiler_to_use):
     """Test MSE loss with default mean reduction"""
 
     def fn(input_tensor, target):
@@ -3761,10 +3761,12 @@ def test_mse_loss_default_reduction(device: str):
 
     input_tensor = torch.randn(3, 4)
     target = torch.randn(3, 4)
-    check_functions_are_equivalent(fn, device, [input_tensor, target])
+    check_functions_are_equivalent(
+        fn, device, [input_tensor, target], compiler=compiler_to_use
+    )
 
 
-def test_mse_loss_mean_reduction(device: str):
+def test_mse_loss_mean_reduction(device: str, compiler_to_use):
     """Test MSE loss with explicit mean reduction"""
 
     def fn(input_tensor, target):
@@ -3772,7 +3774,9 @@ def test_mse_loss_mean_reduction(device: str):
 
     input_tensor = torch.randn(2, 5)
     target = torch.randn(2, 5)
-    check_functions_are_equivalent(fn, device, [input_tensor, target])
+    check_functions_are_equivalent(
+        fn, device, [input_tensor, target], compiler=compiler_to_use
+    )
 
 
 def test_mse_loss_sum_reduction(device: str):
@@ -3786,7 +3790,7 @@ def test_mse_loss_sum_reduction(device: str):
     check_functions_are_equivalent(fn, device, [input_tensor, target])
 
 
-def test_mse_loss_none_reduction(device: str):
+def test_mse_loss_none_reduction(device: str, compiler_to_use):
     """Test MSE loss with no reduction (returns element-wise squared differences)"""
 
     def fn(input_tensor, target):
@@ -3794,10 +3798,12 @@ def test_mse_loss_none_reduction(device: str):
 
     input_tensor = torch.randn(2, 3)
     target = torch.randn(2, 3)
-    check_functions_are_equivalent(fn, device, [input_tensor, target])
+    check_functions_are_equivalent(
+        fn, device, [input_tensor, target], compiler=compiler_to_use
+    )
 
 
-def test_mse_loss_1d(device: str):
+def test_mse_loss_1d(device: str, compiler_to_use):
     """Test MSE loss on 1D tensors"""
 
     def fn(input_tensor, target):
@@ -3805,10 +3811,12 @@ def test_mse_loss_1d(device: str):
 
     input_tensor = torch.randn(10)
     target = torch.randn(10)
-    check_functions_are_equivalent(fn, device, [input_tensor, target])
+    check_functions_are_equivalent(
+        fn, device, [input_tensor, target], compiler=compiler_to_use
+    )
 
 
-def test_mse_loss_3d(device: str):
+def test_mse_loss_3d(device: str, compiler_to_use):
     """Test MSE loss on 3D tensors"""
 
     def fn(input_tensor, target):
@@ -3816,7 +3824,9 @@ def test_mse_loss_3d(device: str):
 
     input_tensor = torch.randn(2, 3, 4)
     target = torch.randn(2, 3, 4)
-    check_functions_are_equivalent(fn, device, [input_tensor, target])
+    check_functions_are_equivalent(
+        fn, device, [input_tensor, target], compiler=compiler_to_use
+    )
 
 
 def test_addmm_basic(device: str, compiler_to_use):
