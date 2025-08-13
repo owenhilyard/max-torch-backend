@@ -1045,6 +1045,14 @@ def torch_foreach_add_equivalent(tensors, others, alpha=1.0):
     return result
 
 
+def torch_slice_equivalent(input, dim, start: int, end: int, step: int = 1):
+    if end == 2**63 - 1:  # MAX_INT64
+        end = None
+    slices = [slice(None)] * len(input.shape)
+    slices[dim] = slice(start, end, step)
+    return input[*slices]
+
+
 def no_op(*args, **kwargs):
     pass
 
@@ -1193,6 +1201,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten._adaptive_avg_pool2d: torch_adaptive_avg_pool2d_equivalent,
     aten.select: torch_select_equivalent,
     aten._to_copy: torch_to_equivalent,
+    aten.slice: torch_slice_equivalent,
     "view": torch_view_equivalent,
     "contiguous": torch_contiguous_equivalent,
     "unsqueeze": torch_unsqueeze_equivalent,

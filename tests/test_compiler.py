@@ -960,31 +960,40 @@ def test_embedding_padding_idx_scalar(device: str, compiler_to_use):
     )
 
 
-def test_tensor_slice_basic(device: str):
+def test_tensor_slice_basic(device: str, compiler_to_use):
     def fn(x):
         return x[1:3]  # Basic slice along first dimension
 
     x = torch.randn(5, 4)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_tensor_slice_2d(device: str):
+def test_tensor_slice_2d(device: str, compiler_to_use):
     def fn(x):
         return x[1:3, 0:2]  # Slice along both dimensions
 
     x = torch.randn(5, 4)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_tensor_slice_negative_index(device: str):
+def test_tensor_slice_negative_index(device: str, compiler_to_use):
     def fn(x):
         return x[-2:]  # Negative slice
 
     x = torch.randn(5, 3)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
+
+
+def test_tensor_slice_with_step(device: str, compiler_to_use):
+    def fn(x):
+        return x[1:10:2]  # Negative slice
+
+    x = torch.randn(20, 20)
+
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_to_float(device: str):
