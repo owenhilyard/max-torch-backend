@@ -3785,12 +3785,12 @@ def test_repeat_interleave_basic(device: str):
     check_functions_are_equivalent(fn, device, [input_tensor])
 
 
-def test_repeat_interleave_different_dim(device: str):
+def test_repeat_interleave_different_dim(device: str, compiler_to_use):
     def fn(x):
         return x.repeat_interleave(3, dim=1)
 
     input_tensor = torch.randn(2, 4, 5)
-    check_functions_are_equivalent(fn, device, [input_tensor])
+    check_functions_are_equivalent(fn, device, [input_tensor], compiler=compiler_to_use)
 
 
 def test_repeat_interleave_negative_dim(device: str):

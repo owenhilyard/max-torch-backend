@@ -1126,6 +1126,10 @@ def no_op(*args, **kwargs):
     pass
 
 
+def torch_clone_equivalent(input, memory_format=None):
+    return input
+
+
 IDENTICAL_FUNCTIONS = [
     operator.add,
     operator.sub,
@@ -1286,7 +1290,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.where: torch_aten_where_equivalent,
     aten.sigmoid: max_ops.sigmoid,
     aten.max_pool2d_with_indices: torch_max_pool2d_with_indices_equivalent,
-    aten.clone: identity,
+    aten.clone: torch_clone_equivalent,
     "view": torch_view_equivalent,
     "contiguous": torch_contiguous_equivalent,
     "unsqueeze": torch_unsqueeze_equivalent,
