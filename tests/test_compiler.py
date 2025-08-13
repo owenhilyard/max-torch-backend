@@ -3808,35 +3808,35 @@ def test_torch_full_basic(device: str):
     check_functions_are_equivalent(fn, device, [])
 
 
-def test_torch_full_with_dtype(device: str):
+def test_torch_full_with_dtype(device: str, compiler_to_use):
     def fn():
         return torch.full((2, 3), 5.5, dtype=torch.float32)
 
-    check_functions_are_equivalent(fn, device, [])
+    check_functions_are_equivalent(fn, device, [], compiler=compiler_to_use)
 
 
-def test_torch_triu_basic(device: str):
+def test_torch_triu_basic(device: str, compiler_to_use):
     def fn(x):
         return torch.triu(x)
 
     input_tensor = torch.randn(4, 4)
-    check_functions_are_equivalent(fn, device, [input_tensor])
+    check_functions_are_equivalent(fn, device, [input_tensor], compiler=compiler_to_use)
 
 
-def test_torch_triu_with_diagonal(device: str):
+def test_torch_triu_with_diagonal(device: str, compiler_to_use):
     def fn(x):
         return torch.triu(x, diagonal=1)
 
     input_tensor = torch.randn(3, 3)
-    check_functions_are_equivalent(fn, device, [input_tensor])
+    check_functions_are_equivalent(fn, device, [input_tensor], compiler=compiler_to_use)
 
 
-def test_silu_activation(device: str):
+def test_silu_activation(device: str, compiler_to_use):
     def fn(x):
         return F.silu(x)
 
     input_tensor = torch.randn(3, 4, 5)
-    check_functions_are_equivalent(fn, device, [input_tensor])
+    check_functions_are_equivalent(fn, device, [input_tensor], compiler=compiler_to_use)
 
 
 def test_mse_loss_default_reduction(device: str, compiler_to_use):
