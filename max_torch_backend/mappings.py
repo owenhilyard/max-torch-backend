@@ -331,6 +331,25 @@ def relu_equivalent(tensor, inplace: bool = False):
     return max_ops.relu(tensor)
 
 
+def torch_max_pool2d_with_indices_equivalent(
+    input, kernel_size, stride, padding=0, dilation=1, ceil_mode=False
+) -> tuple[max_ops.TensorType, max_ops.TensorType]:
+    # the first output is the values, the second output is the indices
+    # most of the time people just want the values so we'll implement that
+    # for now.
+    values = torch_max_pool2d_equivalent(
+        input,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        dilation=dilation,
+        ceil_mode=ceil_mode,
+        return_indices=False,
+    )
+    # TODO: Add indices
+    return (values,)
+
+
 def torch_max_pool2d_equivalent(
     input,
     kernel_size,
@@ -361,9 +380,9 @@ def torch_max_pool2d_equivalent(
     result = max_ops.max_pool2d(
         input_nhwc,
         kernel_size=kernel_size,
-        stride=stride,
-        padding=padding,
-        dilation=dilation,
+        stride=tuple(stride),
+        padding=tuple(padding),
+        dilation=tuple(dilation),
         ceil_mode=ceil_mode,
     )
 
@@ -1266,6 +1285,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.scalar_tensor: torch_scalar_tensor_equivalent,
     aten.where: torch_aten_where_equivalent,
     aten.sigmoid: max_ops.sigmoid,
+    aten.max_pool2d_with_indices: torch_max_pool2d_with_indices_equivalent,
     "view": torch_view_equivalent,
     "contiguous": torch_contiguous_equivalent,
     "unsqueeze": torch_unsqueeze_equivalent,

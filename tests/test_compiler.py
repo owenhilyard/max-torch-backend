@@ -3048,7 +3048,7 @@ def test_max_pool2d_with_padding(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_max_pool2d_asymmetric_kernel(device: str):
+def test_max_pool2d_asymmetric_kernel(device: str, compiler_to_use):
     """Test max_pool2d with asymmetric kernel"""
 
     def fn(x):
@@ -3057,7 +3057,7 @@ def test_max_pool2d_asymmetric_kernel(device: str):
     batch_size, channels, height, width = 2, 3, 8, 9
     x = torch.randn(batch_size, channels, height, width)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_max_pool2d_various_sizes(device: str):
