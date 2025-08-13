@@ -3561,30 +3561,32 @@ def test_layer_norm_basic(device: str):
     check_functions_are_equivalent(fn, device, [input_tensor])
 
 
-def test_layer_norm_with_weight_bias(device: str):
+def test_layer_norm_with_weight_bias(device: str, compiler_to_use):
     def fn(x, weight, bias):
         return F.layer_norm(x, normalized_shape=(10,), weight=weight, bias=bias)
 
     input_tensor = torch.randn(5, 10)
     weight = torch.randn(10)
     bias = torch.randn(10)
-    check_functions_are_equivalent(fn, device, [input_tensor, weight, bias])
+    check_functions_are_equivalent(
+        fn, device, [input_tensor, weight, bias], compiler=compiler_to_use
+    )
 
 
-def test_layer_norm_multidim(device: str):
+def test_layer_norm_multidim(device: str, compiler_to_use):
     def fn(x):
         return F.layer_norm(x, normalized_shape=(3, 4))
 
     input_tensor = torch.randn(2, 5, 3, 4)
-    check_functions_are_equivalent(fn, device, [input_tensor])
+    check_functions_are_equivalent(fn, device, [input_tensor], compiler=compiler_to_use)
 
 
-def test_layer_norm_custom_eps(device: str):
+def test_layer_norm_custom_eps(device: str, compiler_to_use):
     def fn(x):
         return F.layer_norm(x, normalized_shape=(10,), eps=1e-6)
 
     input_tensor = torch.randn(5, 10)
-    check_functions_are_equivalent(fn, device, [input_tensor])
+    check_functions_are_equivalent(fn, device, [input_tensor], compiler=compiler_to_use)
 
 
 def test_gelu_basic(device: str, compiler_to_use):

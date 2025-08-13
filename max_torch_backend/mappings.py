@@ -848,6 +848,17 @@ def torch_full_equivalent(
     return max_ops.broadcast_to(scalar, size)
 
 
+def torch_native_layer_norm_equivalent(input, normalized_shape, weight, bias, eps):
+    # expects a tuple or list for some reason
+    # surely for the backward pass,
+    # for the moment we only output the first one.
+    return (
+        torch_layer_norm_equivalent(
+            input, normalized_shape, weight=weight, bias=bias, eps=eps
+        ),
+    )
+
+
 def torch_layer_norm_equivalent(
     input, normalized_shape, weight=None, bias=None, eps=1e-5
 ):
@@ -1214,6 +1225,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.clamp: torch_clamp_equivalent,
     aten.arange: torch_arange_equivalent,
     aten.layer_norm: torch_layer_norm_equivalent,
+    aten.native_layer_norm: torch_native_layer_norm_equivalent,
     aten.gelu: torch_gelu_equivalent,
     aten.softmax: torch_softmax_equivalent,
     aten.masked_fill: torch_masked_fill_equivalent,
