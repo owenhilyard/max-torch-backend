@@ -835,7 +835,7 @@ def test_embedding_basic(device: str, compiler_to_use):
     )
 
 
-def test_embedding_2d_indices(device: str):
+def test_embedding_2d_indices(device: str, compiler_to_use):
     """Test embedding with 2D indices (batch processing)"""
 
     def fn(indices, weight):
@@ -847,10 +847,12 @@ def test_embedding_2d_indices(device: str):
     indices = torch.randint(0, vocab_size, (batch_size, seq_length))
     weight = torch.randn(vocab_size, embedding_dim)
 
-    check_functions_are_equivalent(fn, device, [indices, weight])
+    check_functions_are_equivalent(
+        fn, device, [indices, weight], compiler=compiler_to_use
+    )
 
 
-def test_embedding_3d_indices(device: str):
+def test_embedding_3d_indices(device: str, compiler_to_use):
     """Test embedding with 3D indices"""
 
     def fn(indices, weight):
@@ -862,10 +864,12 @@ def test_embedding_3d_indices(device: str):
     indices = torch.randint(0, vocab_size, (batch_size, seq_length, depth))
     weight = torch.randn(vocab_size, embedding_dim)
 
-    check_functions_are_equivalent(fn, device, [indices, weight])
+    check_functions_are_equivalent(
+        fn, device, [indices, weight], compiler=compiler_to_use
+    )
 
 
-def test_embedding_single_index(device: str):
+def test_embedding_single_index(device: str, compiler_to_use):
     """Test embedding with single index (scalar)"""
 
     def fn(indices, weight):
@@ -876,10 +880,12 @@ def test_embedding_single_index(device: str):
     indices = torch.tensor(5)  # Scalar tensor
     weight = torch.randn(vocab_size, embedding_dim)
 
-    check_functions_are_equivalent(fn, device, [indices, weight])
+    check_functions_are_equivalent(
+        fn, device, [indices, weight], compiler=compiler_to_use
+    )
 
 
-def test_embedding_combined_with_other_ops(device: str):
+def test_embedding_combined_with_other_ops(device: str, compiler_to_use):
     """Test embedding combined with other operations"""
 
     def fn(indices, weight, bias):
@@ -893,10 +899,12 @@ def test_embedding_combined_with_other_ops(device: str):
     weight = torch.randn(vocab_size, embedding_dim)
     bias = torch.randn(embedding_dim)
 
-    check_functions_are_equivalent(fn, device, [indices, weight, bias])
+    check_functions_are_equivalent(
+        fn, device, [indices, weight, bias], compiler=compiler_to_use
+    )
 
 
-def test_embedding_with_padding_idx(device: str):
+def test_embedding_with_padding_idx(device: str, compiler_to_use):
     """Test embedding with padding_idx parameter"""
 
     def fn(indices, weight):
@@ -908,10 +916,12 @@ def test_embedding_with_padding_idx(device: str):
     indices = torch.tensor([[0, 1, 2, 0, 3], [4, 0, 5, 6, 0]])
     weight = torch.randn(vocab_size, embedding_dim)
 
-    check_functions_are_equivalent(fn, device, [indices, weight])
+    check_functions_are_equivalent(
+        fn, device, [indices, weight], compiler=compiler_to_use
+    )
 
 
-def test_embedding_padding_idx_different_values(device: str):
+def test_embedding_padding_idx_different_values(device: str, compiler_to_use):
     """Test embedding with different padding_idx values"""
 
     def fn_pad_0(indices, weight):
@@ -926,11 +936,15 @@ def test_embedding_padding_idx_different_values(device: str):
     indices_2 = torch.tensor([1, 2, 4, 2])  # Using 2 as padding
     weight = torch.randn(vocab_size, embedding_dim)
 
-    check_functions_are_equivalent(fn_pad_0, device, [indices_0, weight])
-    check_functions_are_equivalent(fn_pad_2, device, [indices_2, weight])
+    check_functions_are_equivalent(
+        fn_pad_0, device, [indices_0, weight], compiler=compiler_to_use
+    )
+    check_functions_are_equivalent(
+        fn_pad_2, device, [indices_2, weight], compiler=compiler_to_use
+    )
 
 
-def test_embedding_padding_idx_scalar(device: str):
+def test_embedding_padding_idx_scalar(device: str, compiler_to_use):
     """Test embedding with padding_idx on scalar indices"""
 
     def fn(indices, weight):
@@ -941,7 +955,9 @@ def test_embedding_padding_idx_scalar(device: str):
     indices = torch.tensor(0)  # Scalar padding index
     weight = torch.randn(vocab_size, embedding_dim)
 
-    check_functions_are_equivalent(fn, device, [indices, weight])
+    check_functions_are_equivalent(
+        fn, device, [indices, weight], compiler=compiler_to_use
+    )
 
 
 def test_tensor_slice_basic(device: str):
