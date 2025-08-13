@@ -1139,7 +1139,7 @@ def test_transpose_negative_dims(device: str, compiler_to_use):
     check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_transpose_same_dim(device: str):
+def test_transpose_same_dim(device: str, compiler_to_use):
     """Test transpose with same dimension (should be no-op)"""
 
     def fn(x):
@@ -1147,7 +1147,7 @@ def test_transpose_same_dim(device: str):
 
     x = torch.randn(2, 3, 4)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_transpose_4d(device: str, compiler_to_use):

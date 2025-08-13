@@ -1057,6 +1057,10 @@ def torch_slice_equivalent(input, dim, start: int, end: int, step: int = 1):
     return input[*slices]
 
 
+def identity(x):
+    return x
+
+
 def no_op(*args, **kwargs):
     pass
 
@@ -1207,6 +1211,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten._to_copy: torch_to_equivalent,
     aten.slice: torch_slice_equivalent,
     aten.expand: torch_aten_expand_equivalent,
+    aten.alias: identity,
     "view": torch_view_equivalent,
     "contiguous": torch_contiguous_equivalent,
     "unsqueeze": torch_unsqueeze_equivalent,
