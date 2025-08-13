@@ -367,7 +367,7 @@ def test_torch_amin_amax_single_element_options(
 
 @pytest.mark.parametrize("keepdim", [True, False])
 @pytest.mark.parametrize("shapes,dims", [((8,), 0), ((2, 3, 4), -1), ((2, 3, 4), None)])
-def test_torch_argmax(device: str, shapes, dims, keepdim):
+def test_torch_argmax(device: str, shapes, dims, keepdim, compiler_to_use):
     """Test argmax with various dimensions and keepdim options."""
 
     def fn(x):
@@ -375,7 +375,7 @@ def test_torch_argmax(device: str, shapes, dims, keepdim):
 
     a = torch.randn(shapes)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
 @pytest.mark.parametrize("shapes", [(8,), (3, 4), (2, 3, 4), (5, 6, 2, 3)])
@@ -392,7 +392,7 @@ def test_torch_argmax_no_dim(device: str, shapes, compiler_to_use):
 
 @pytest.mark.parametrize("keepdim", [True, False])
 @pytest.mark.parametrize("shapes,dims", [((8,), 0), ((2, 3, 4), -1), ((2, 3, 4), None)])
-def test_torch_argmin(device: str, shapes, dims, keepdim):
+def test_torch_argmin(device: str, shapes, dims, keepdim, compiler_to_use):
     """Test argmin with various dimensions and keepdim options."""
 
     def fn(x):
@@ -400,7 +400,7 @@ def test_torch_argmin(device: str, shapes, dims, keepdim):
 
     a = torch.randn(shapes)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
 @pytest.mark.parametrize("shapes", [(8,), (3, 4), (2, 3, 4), (5, 6, 2, 3)])
@@ -429,13 +429,13 @@ def test_torch_max_single_value(device: str, shapes, func, compiler_to_use):
 @pytest.mark.parametrize("func", [torch.min, torch.max])
 @pytest.mark.parametrize("keepdim", [True, False])
 @pytest.mark.parametrize("shapes,dims", [((8,), 0), ((2, 3, 4), -1)])
-def test_torch_max_with_dim(device: str, shapes, dims, keepdim, func):
+def test_torch_max_with_dim(device: str, shapes, dims, keepdim, func, compiler_to_use):
     def fn(x):
         return func(x, dim=dims, keepdim=keepdim)
 
     a = torch.randn(shapes)
 
-    check_functions_are_equivalent(fn, device, [a])
+    check_functions_are_equivalent(fn, device, [a], compiler=compiler_to_use)
 
 
 @pytest.mark.parametrize("func", [torch.min, torch.max])
@@ -452,14 +452,16 @@ def test_torch_max_with_dim_positional(
 
 
 @pytest.mark.parametrize("func", [torch.min, torch.max])
-def test_torch_max_elementwise(device: str, tensor_shapes: tuple, func):
+def test_torch_max_elementwise(
+    device: str, tensor_shapes: tuple, func, compiler_to_use
+):
     def fn(x, y):
         return func(x, y)
 
     a = torch.randn(tensor_shapes)
     b = torch.randn(tensor_shapes)
 
-    check_functions_are_equivalent(fn, device, [a, b])
+    check_functions_are_equivalent(fn, device, [a, b], compiler=compiler_to_use)
 
 
 @pytest.mark.parametrize("func", [torch.minimum, torch.maximum])
@@ -1121,7 +1123,7 @@ def test_transpose_same_dim(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_transpose_4d(device: str):
+def test_transpose_4d(device: str, compiler_to_use):
     """Test transpose on 4D tensor"""
 
     def fn(x):
@@ -1129,10 +1131,10 @@ def test_transpose_4d(device: str):
 
     x = torch.randn(2, 3, 4, 5)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_transpose_batch_dimension(device: str):
+def test_transpose_batch_dimension(device: str, compiler_to_use):
     """Test transpose involving batch dimension"""
 
     def fn(x):
@@ -1140,10 +1142,10 @@ def test_transpose_batch_dimension(device: str):
 
     x = torch.randn(8, 16, 32)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_transpose_with_arithmetic(device: str):
+def test_transpose_with_arithmetic(device: str, compiler_to_use):
     """Test transpose combined with arithmetic operations"""
 
     def fn(x, y):
@@ -1153,10 +1155,10 @@ def test_transpose_with_arithmetic(device: str):
     x = torch.randn(3, 4)
     y = torch.randn(4, 3)
 
-    check_functions_are_equivalent(fn, device, [x, y])
+    check_functions_are_equivalent(fn, device, [x, y], compiler=compiler_to_use)
 
 
-def test_transpose_multiple_ops(device: str):
+def test_transpose_multiple_ops(device: str, compiler_to_use):
     """Test multiple transpose operations"""
 
     def fn(x):
@@ -1168,7 +1170,7 @@ def test_transpose_multiple_ops(device: str):
 
     x = torch.randn(2, 3, 4)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_transpose_with_other_methods(device: str):
@@ -1183,7 +1185,7 @@ def test_transpose_with_other_methods(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_transpose_scalar_like(device: str):
+def test_transpose_scalar_like(device: str, compiler_to_use):
     """Test transpose on tensor with singleton dimensions"""
 
     def fn(x):
@@ -1191,7 +1193,7 @@ def test_transpose_scalar_like(device: str):
 
     x = torch.randn(1, 3, 1)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_tensor_cos_method(device: str, compiler_to_use):
@@ -1288,7 +1290,7 @@ def test_tensor_cos_sin_different_shapes(device: str, tensor_shapes: tuple):
     check_functions_are_equivalent(fn_sin, device, [x])
 
 
-def test_tensor_pow_method(device: str):
+def test_tensor_pow_method(device: str, compiler_to_use):
     """Test tensor.pow() method"""
 
     def fn(x, y):
@@ -1297,10 +1299,10 @@ def test_tensor_pow_method(device: str):
     x = torch.randn(3, 4).abs() + 0.1  # Avoid negative base
     y = torch.randn(3, 4) * 2  # Keep exponent reasonable
 
-    check_functions_are_equivalent(fn, device, [x, y])
+    check_functions_are_equivalent(fn, device, [x, y], compiler=compiler_to_use)
 
 
-def test_tensor_pow_scalar_exponent(device: str):
+def test_tensor_pow_scalar_exponent(device: str, compiler_to_use):
     """Test tensor.pow() with scalar exponent"""
 
     def fn(x):
@@ -1308,10 +1310,10 @@ def test_tensor_pow_scalar_exponent(device: str):
 
     x = torch.randn(3, 4)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_tensor_pow_negative_exponent(device: str):
+def test_tensor_pow_negative_exponent(device: str, compiler_to_use):
     """Test tensor.pow() with negative exponent"""
 
     def fn(x):
@@ -1319,10 +1321,10 @@ def test_tensor_pow_negative_exponent(device: str):
 
     x = torch.randn(3, 4).abs() + 1.0  # Avoid division by zero
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_tensor_pow_fractional_exponent(device: str):
+def test_tensor_pow_fractional_exponent(device: str, compiler_to_use):
     """Test tensor.pow() with fractional exponent"""
 
     def fn(x):
@@ -1330,7 +1332,7 @@ def test_tensor_pow_fractional_exponent(device: str):
 
     x = torch.randn(3, 4).abs() + 0.1  # Ensure positive for square root
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_tensor_pow_with_arithmetic(device: str, compiler_to_use):
@@ -1476,7 +1478,7 @@ def test_to_with_device_dtype_keywords(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_to_with_torch_device_object(device: str):
+def test_to_with_torch_device_object(device: str, compiler_to_use):
     """Test tensor.to() with torch.device object"""
 
     def fn(x):
@@ -1484,10 +1486,12 @@ def test_to_with_torch_device_object(device: str):
 
     x = torch.randn(2, 3)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_to_with_torch_device_object_cuda(device: str, gpu_available: bool):
+def test_to_with_torch_device_object_cuda(
+    device: str, gpu_available: bool, compiler_to_use
+):
     """Test tensor.to() with torch.device object for CUDA"""
     if not gpu_available:
         pytest.skip("CUDA not available")
@@ -1497,7 +1501,7 @@ def test_to_with_torch_device_object_cuda(device: str, gpu_available: bool):
 
     x = torch.randn(2, 3)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_to_with_dtype_positional(device: str):
@@ -2376,7 +2380,7 @@ def test_tensor_view_large_dimensions(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_tensor_view_with_other_methods(device: str):
+def test_tensor_view_with_other_methods(device: str, compiler_to_use):
     """Test tensor.view() combined with other tensor methods"""
 
     def fn(x):
@@ -2384,7 +2388,7 @@ def test_tensor_view_with_other_methods(device: str):
 
     x = torch.randn(3, 2, 4)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_tensor_view_broadcasting_prep(device: str):
@@ -2435,7 +2439,7 @@ def test_tensor_contiguous_view_chain(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_tensor_unsqueeze_basic(device: str):
+def test_tensor_unsqueeze_basic(device: str, compiler_to_use):
     """Test basic tensor.unsqueeze() operation"""
 
     def fn(x):
@@ -2443,10 +2447,10 @@ def test_tensor_unsqueeze_basic(device: str):
 
     x = torch.randn(3, 4)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_tensor_unsqueeze_middle_dim(device: str):
+def test_tensor_unsqueeze_middle_dim(device: str, compiler_to_use):
     """Test tensor.unsqueeze() in middle dimension"""
 
     def fn(x):
@@ -2454,10 +2458,10 @@ def test_tensor_unsqueeze_middle_dim(device: str):
 
     x = torch.randn(3, 4)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_tensor_unsqueeze_last_dim(device: str):
+def test_tensor_unsqueeze_last_dim(device: str, compiler_to_use):
     """Test tensor.unsqueeze() at last dimension"""
 
     def fn(x):
@@ -2465,10 +2469,10 @@ def test_tensor_unsqueeze_last_dim(device: str):
 
     x = torch.randn(3, 4)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_tensor_unsqueeze_negative_dim(device: str):
+def test_tensor_unsqueeze_negative_dim(device: str, compiler_to_use):
     """Test tensor.unsqueeze() with negative dimension"""
 
     def fn(x):
@@ -2476,10 +2480,10 @@ def test_tensor_unsqueeze_negative_dim(device: str):
 
     x = torch.randn(3, 4)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_tensor_unsqueeze_multiple_ops(device: str):
+def test_tensor_unsqueeze_multiple_ops(device: str, compiler_to_use):
     """Test multiple tensor.unsqueeze() operations"""
 
     def fn(x):
@@ -2487,10 +2491,10 @@ def test_tensor_unsqueeze_multiple_ops(device: str):
 
     x = torch.randn(3, 4)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_tensor_unsqueeze_with_view(device: str):
+def test_tensor_unsqueeze_with_view(device: str, compiler_to_use):
     """Test tensor.unsqueeze() combined with view()"""
 
     def fn(x):
@@ -2499,10 +2503,10 @@ def test_tensor_unsqueeze_with_view(device: str):
 
     x = torch.randn(2, 3)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_tensor_unsqueeze_1d_tensor(device: str):
+def test_tensor_unsqueeze_1d_tensor(device: str, compiler_to_use):
     """Test tensor.unsqueeze() on 1D tensor"""
 
     def fn(x):
@@ -2510,10 +2514,10 @@ def test_tensor_unsqueeze_1d_tensor(device: str):
 
     x = torch.randn(5)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_tensor_unsqueeze_scalar(device: str):
+def test_tensor_unsqueeze_scalar(device: str, compiler_to_use):
     """Test tensor.unsqueeze() on scalar tensor"""
 
     def fn(x):
@@ -2521,7 +2525,7 @@ def test_tensor_unsqueeze_scalar(device: str):
 
     x = torch.randn(())
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_unary_negation(device: str):
@@ -3389,7 +3393,7 @@ def test_torch_clamp_max_only(device: str, shapes):
     check_functions_are_equivalent(fn, device, [a])
 
 
-def test_torch_clamp_tensor_bounds(device: str, tensor_shapes: tuple):
+def test_torch_clamp_tensor_bounds(device: str, tensor_shapes: tuple, compiler_to_use):
     """Test torch.clamp with tensor bounds (min and max as tensors)."""
 
     def fn(x, min_tensor, max_tensor):
@@ -3399,10 +3403,12 @@ def test_torch_clamp_tensor_bounds(device: str, tensor_shapes: tuple):
     min_tensor = torch.full(tensor_shapes, -0.5)
     max_tensor = torch.full(tensor_shapes, 0.5)
 
-    check_functions_are_equivalent(fn, device, [a, min_tensor, max_tensor])
+    check_functions_are_equivalent(
+        fn, device, [a, min_tensor, max_tensor], compiler=compiler_to_use
+    )
 
 
-def test_torch_clamp_edge_cases(device: str):
+def test_torch_clamp_edge_cases(device: str, compiler_to_use):
     """Test torch.clamp edge cases with specific values."""
 
     def fn_identical_bounds(x):
@@ -3415,8 +3421,12 @@ def test_torch_clamp_edge_cases(device: str):
 
     a = torch.tensor([-2.0, -0.5, 0.0, 0.5, 1.0, 2.0])
 
-    check_functions_are_equivalent(fn_identical_bounds, device, [a])
-    check_functions_are_equivalent(fn_inverted_bounds, device, [a])
+    check_functions_are_equivalent(
+        fn_identical_bounds, device, [a], compiler=compiler_to_use
+    )
+    check_functions_are_equivalent(
+        fn_inverted_bounds, device, [a], compiler=compiler_to_use
+    )
 
 
 def test_torch_arange_single_arg_int(device: str):
