@@ -76,6 +76,27 @@ def torch_conv2d_equivalent(
     return result.permute([0, 3, 1, 2])
 
 
+def torch_aten_embedding_equivalent(
+    input,
+    weight,
+    padding_idx=None,
+    max_norm=None,
+    norm_type=2.0,
+    scale_grad_by_freq=False,
+    sparse=False,
+):
+    # For some reason with aten, input and weight are inverted.
+    return torch_embedding_equivalent(
+        weight,
+        input,
+        padding_idx=padding_idx,
+        max_norm=max_norm,
+        norm_type=norm_type,
+        scale_grad_by_freq=scale_grad_by_freq,
+        sparse=sparse,
+    )
+
+
 def torch_embedding_equivalent(
     input,
     weight,
@@ -85,9 +106,6 @@ def torch_embedding_equivalent(
     scale_grad_by_freq=False,
     sparse=False,
 ):
-    # Note: padding_idx affects gradient computation during training, not forward pass
-    # During inference, we simply perform the lookup as normal
-    # The padding_idx behavior (zero gradients) is handled by PyTorch's autograd system
     if max_norm is not None:
         raise NotImplementedError(
             "max_norm is not supported yet in this embedding implementation"
@@ -1170,7 +1188,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.argmin: torch_argmin_equivalent,
     aten.argmax: torch_argmax_equivalent,
     aten.relu: relu_equivalent,
-    aten.embedding: torch_embedding_equivalent,
+    aten.embedding: torch_aten_embedding_equivalent,
     aten.convolution: torch_aten_convolution_equivalent,
     aten._adaptive_avg_pool2d: torch_adaptive_avg_pool2d_equivalent,
     aten.select: torch_select_equivalent,

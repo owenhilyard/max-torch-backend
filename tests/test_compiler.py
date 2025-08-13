@@ -817,7 +817,7 @@ def test_conv2d_combined_with_other_ops(device: str, compiler_to_use):
     check_functions_are_equivalent(fn, device, [x, w, b, y], compiler=compiler_to_use)
 
 
-def test_embedding_basic(device: str):
+def test_embedding_basic(device: str, compiler_to_use):
     """Test basic embedding lookup"""
 
     def fn(indices, weight):
@@ -830,7 +830,9 @@ def test_embedding_basic(device: str):
     indices = torch.randint(0, vocab_size, (seq_length,))
     weight = torch.randn(vocab_size, embedding_dim)
 
-    check_functions_are_equivalent(fn, device, [indices, weight])
+    check_functions_are_equivalent(
+        fn, device, [indices, weight], compiler=compiler_to_use
+    )
 
 
 def test_embedding_2d_indices(device: str):
