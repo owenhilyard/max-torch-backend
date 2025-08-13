@@ -3357,7 +3357,7 @@ def test_tril_4_dimensions(device: str):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_tril_int32(device: str):
+def test_tril_int32(device: str, compiler_to_use):
     """Test tril with float32 tensors"""
 
     def fn(x):
@@ -3365,7 +3365,7 @@ def test_tril_int32(device: str):
 
     # Test with float32 (main supported type)
     x_float32 = torch.randint(0, 5, (3, 3), dtype=torch.int32)
-    check_functions_are_equivalent(fn, device, [x_float32])
+    check_functions_are_equivalent(fn, device, [x_float32], compiler=compiler_to_use)
 
 
 def test_split_basic(device: str):

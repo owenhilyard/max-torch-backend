@@ -768,6 +768,7 @@ def torch_arange_equivalent(
     layout=torch.strided,
     device=None,
     requires_grad=False,
+    pin_memory=False,
 ):
     if isinstance(start, float):
         raise ValueError("We don't support float start values for torch.arange")
@@ -1067,6 +1068,18 @@ def torch_split_with_sizes_equivalent(input, split_sizes, dim=0):
     return result
 
 
+def torch_scalar_tensor_equivalent(
+    value: float | int, dtype: torch.dtype, layout: torch.layout, device: torch.device
+):
+    return max_ops.constant(
+        value, dtype=DType.from_torch(dtype), device=max_device_ref(device)
+    )
+
+
+def torch_aten_where_equivalent(input, condition, other):
+    return max_ops.where(input, condition, other)
+
+
 def identity(x):
     return x
 
@@ -1175,6 +1188,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.sub: operator.sub,
     aten.mul: operator.mul,
     aten.add: operator.add,
+    aten.le: operator.le,
     aten.div: torch_div_equivalent,
     aten.floordiv: operator.floordiv,
     aten.permute: max_ops.permute,
@@ -1223,6 +1237,8 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.expand: torch_aten_expand_equivalent,
     aten.alias: identity,
     aten.split_with_sizes: torch_split_with_sizes_equivalent,
+    aten.scalar_tensor: torch_scalar_tensor_equivalent,
+    aten.where: torch_aten_where_equivalent,
     "view": torch_view_equivalent,
     "contiguous": torch_contiguous_equivalent,
     "unsqueeze": torch_unsqueeze_equivalent,
