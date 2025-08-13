@@ -611,7 +611,7 @@ def test_conv2d_with_bias(device: str, compiler_to_use):
     check_functions_are_equivalent(fn, device, [x, w, b], compiler=compiler_to_use)
 
 
-def test_conv2d_stride_int(device: str):
+def test_conv2d_stride_int(device: str, compiler_to_use):
     """Test conv2d with integer stride"""
 
     def fn(x, w):
@@ -623,10 +623,10 @@ def test_conv2d_stride_int(device: str):
     x = torch.randn(batch_size, in_channels, height, width)
     w = torch.randn(out_channels, in_channels, kernel_size, kernel_size)
 
-    check_functions_are_equivalent(fn, device, [x, w])
+    check_functions_are_equivalent(fn, device, [x, w], compiler=compiler_to_use)
 
 
-def test_conv2d_stride_tuple(device: str):
+def test_conv2d_stride_tuple(device: str, compiler_to_use):
     """Test conv2d with tuple stride"""
 
     def fn(x, w):
@@ -638,7 +638,7 @@ def test_conv2d_stride_tuple(device: str):
     x = torch.randn(batch_size, in_channels, height, width)
     w = torch.randn(out_channels, in_channels, kernel_size, kernel_size)
 
-    check_functions_are_equivalent(fn, device, [x, w])
+    check_functions_are_equivalent(fn, device, [x, w], compiler=compiler_to_use)
 
 
 def test_conv2d_padding_int(device: str):
@@ -656,7 +656,7 @@ def test_conv2d_padding_int(device: str):
     check_functions_are_equivalent(fn, device, [x, w])
 
 
-def test_conv2d_padding_tuple(device: str):
+def test_conv2d_padding_tuple(device: str, compiler_to_use):
     """Test conv2d with tuple padding"""
 
     def fn(x, w):
@@ -668,7 +668,7 @@ def test_conv2d_padding_tuple(device: str):
     x = torch.randn(batch_size, in_channels, height, width)
     w = torch.randn(out_channels, in_channels, kernel_size, kernel_size)
 
-    check_functions_are_equivalent(fn, device, [x, w])
+    check_functions_are_equivalent(fn, device, [x, w], compiler=compiler_to_use)
 
 
 @pytest.mark.xfail(reason="Dilation not implemented yet on max")
@@ -2569,7 +2569,7 @@ def test_negation_different_shapes(device: str, tensor_shapes: tuple):
     check_functions_are_equivalent(fn, device, [x])
 
 
-def test_get_attr_parameter(device: str):
+def test_get_attr_parameter(device: str, compiler_to_use):
     """Test get_attr node with parameter access"""
 
     class ParameterModule(torch.nn.Module):
@@ -2598,10 +2598,10 @@ def test_get_attr_parameter(device: str):
     assert "weight" in targets
     assert "bias" in targets
 
-    check_functions_are_equivalent(module, device, [x])
+    check_functions_are_equivalent(module, device, [x], compiler=compiler_to_use)
 
 
-def test_get_attr_nested_parameter(device: str):
+def test_get_attr_nested_parameter(device: str, compiler_to_use):
     """Test get_attr node with nested module parameter access"""
 
     class NestedModule(torch.nn.Module):
@@ -2626,10 +2626,10 @@ def test_get_attr_nested_parameter(device: str):
     targets = [node.target for node in get_attr_nodes]
     assert "scale" in targets
 
-    check_functions_are_equivalent(module, device, [x])
+    check_functions_are_equivalent(module, device, [x], compiler=compiler_to_use)
 
 
-def test_get_attr_buffer(device: str):
+def test_get_attr_buffer(device: str, compiler_to_use):
     """Test get_attr node with buffer access"""
 
     class ModuleWithBuffer(torch.nn.Module):
@@ -2654,10 +2654,10 @@ def test_get_attr_buffer(device: str):
     assert "weight" in targets
     assert "running_mean" in targets
 
-    check_functions_are_equivalent(module, device, [x])
+    check_functions_are_equivalent(module, device, [x], compiler=compiler_to_use)
 
 
-def test_get_attr_multiple_parameters(device: str):
+def test_get_attr_multiple_parameters(device: str, compiler_to_use):
     """Test get_attr nodes with multiple parameters"""
 
     class MultiParamModule(torch.nn.Module):
@@ -2677,7 +2677,7 @@ def test_get_attr_multiple_parameters(device: str):
 
     x = torch.randn(2, 3)
 
-    check_functions_are_equivalent(module, device, [x])
+    check_functions_are_equivalent(module, device, [x], compiler=compiler_to_use)
 
 
 def test_get_attr_with_arithmetic(device: str):
@@ -2701,7 +2701,7 @@ def test_get_attr_with_arithmetic(device: str):
     check_functions_are_equivalent(module, device, [x, y])
 
 
-def test_get_attr_constant_tensor(device: str):
+def test_get_attr_constant_tensor(device: str, compiler_to_use):
     """Test get_attr node with constant tensor"""
 
     class ConstantModule(torch.nn.Module):
@@ -2720,10 +2720,10 @@ def test_get_attr_constant_tensor(device: str):
 
     x = torch.randn(2, 3)
 
-    check_functions_are_equivalent(module, device, [x])
+    check_functions_are_equivalent(module, device, [x], compiler=compiler_to_use)
 
 
-def test_get_attr_deeply_nested(device: str):
+def test_get_attr_deeply_nested(device: str, compiler_to_use):
     """Test get_attr node with deeply nested module hierarchy"""
 
     class InnerModule(torch.nn.Module):
@@ -2750,10 +2750,10 @@ def test_get_attr_deeply_nested(device: str):
 
     x = torch.randn(2, 3)
 
-    check_functions_are_equivalent(module, device, [x])
+    check_functions_are_equivalent(module, device, [x], compiler=compiler_to_use)
 
 
-def test_get_attr_mixed_with_functions(device: str):
+def test_get_attr_mixed_with_functions(device: str, compiler_to_use):
     """Test get_attr nodes mixed with function calls"""
 
     class MixedModule(torch.nn.Module):
@@ -2770,10 +2770,10 @@ def test_get_attr_mixed_with_functions(device: str):
 
     x = torch.randn(2, 3)
 
-    check_functions_are_equivalent(module, device, [x])
+    check_functions_are_equivalent(module, device, [x], compiler=compiler_to_use)
 
 
-def test_get_attr_simple_constant(device: str):
+def test_get_attr_simple_constant(device: str, compiler_to_use):
     """Test get_attr with a simple constant parameter"""
 
     class SimpleConstantModule(torch.nn.Module):
@@ -2797,10 +2797,10 @@ def test_get_attr_simple_constant(device: str):
     targets = [node.target for node in get_attr_nodes]
     assert "constant" in targets
 
-    check_functions_are_equivalent(module, device, [x])
+    check_functions_are_equivalent(module, device, [x], compiler=compiler_to_use)
 
 
-def test_get_attr_torch_tensor(device: str):
+def test_get_attr_torch_tensor(device: str, compiler_to_use):
     class SimpleConstantModule(torch.nn.Module):
         def __init__(self):
             super().__init__()
@@ -2821,7 +2821,7 @@ def test_get_attr_torch_tensor(device: str):
     targets = [node.target for node in get_attr_nodes]
     assert "constant" in targets
 
-    check_functions_are_equivalent(module, device, [x])
+    check_functions_are_equivalent(module, device, [x], compiler=compiler_to_use)
 
 
 # Graph Break Tests
@@ -3053,7 +3053,7 @@ def test_adaptive_avg_pool2d_various_outputs(device: str, compiler_to_use):
     check_functions_are_equivalent(fn_4x4, device, [x], compiler=compiler_to_use)
 
 
-def test_flatten_basic(device: str):
+def test_flatten_basic(device: str, compiler_to_use):
     """Test basic flatten operation"""
 
     def fn(x):
@@ -3062,10 +3062,10 @@ def test_flatten_basic(device: str):
     batch_size, channels, height, width = 2, 3, 4, 5
     x = torch.randn(batch_size, channels, height, width)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_flatten_different_start_dims(device: str):
+def test_flatten_different_start_dims(device: str, compiler_to_use):
     """Test flatten with different start dimensions"""
 
     def fn_start_0(x):
@@ -3076,11 +3076,11 @@ def test_flatten_different_start_dims(device: str):
 
     x = torch.randn(2, 3, 4, 5)
 
-    check_functions_are_equivalent(fn_start_0, device, [x])
-    check_functions_are_equivalent(fn_start_2, device, [x])
+    check_functions_are_equivalent(fn_start_0, device, [x], compiler=compiler_to_use)
+    check_functions_are_equivalent(fn_start_2, device, [x], compiler=compiler_to_use)
 
 
-def test_flatten_with_end_dim(device: str):
+def test_flatten_with_end_dim(device: str, compiler_to_use):
     """Test flatten with specific end dimension"""
 
     def fn(x):
@@ -3088,10 +3088,10 @@ def test_flatten_with_end_dim(device: str):
 
     x = torch.randn(2, 3, 4, 5)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
-def test_flatten_negative_dims(device: str):
+def test_flatten_negative_dims(device: str, compiler_to_use):
     """Test flatten with negative dimensions"""
 
     def fn(x):
@@ -3099,7 +3099,7 @@ def test_flatten_negative_dims(device: str):
 
     x = torch.randn(2, 3, 4, 5)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 def test_dropout_inference(device: str):
@@ -3188,7 +3188,7 @@ def test_max_pool2d_with_conv2d_chain(device: str):
     check_functions_are_equivalent(fn, device, [x, weight1, bias1, weight2, bias2])
 
 
-def test_flatten_after_pooling(device: str):
+def test_flatten_after_pooling(device: str, compiler_to_use):
     """Test flatten operation after pooling (common CNN pattern)"""
 
     def fn(x):
@@ -3199,7 +3199,7 @@ def test_flatten_after_pooling(device: str):
     batch_size, channels, height, width = 3, 64, 12, 12
     x = torch.randn(batch_size, channels, height, width)
 
-    check_functions_are_equivalent(fn, device, [x])
+    check_functions_are_equivalent(fn, device, [x], compiler=compiler_to_use)
 
 
 @pytest.mark.xfail(reason="Dropout training mode not implemented yet")
@@ -3509,28 +3509,28 @@ def test_layer_norm_custom_eps(device: str):
     check_functions_are_equivalent(fn, device, [input_tensor])
 
 
-def test_gelu_basic(device: str):
+def test_gelu_basic(device: str, compiler_to_use):
     def fn(x):
         return F.gelu(x)
 
     input_tensor = torch.randn(5, 10)
-    check_functions_are_equivalent(fn, device, [input_tensor])
+    check_functions_are_equivalent(fn, device, [input_tensor], compiler=compiler_to_use)
 
 
-def test_gelu_tanh_approx(device: str):
+def test_gelu_tanh_approx(device: str, compiler_to_use):
     def fn(x):
         return F.gelu(x, approximate="tanh")
 
     input_tensor = torch.randn(5, 10)
-    check_functions_are_equivalent(fn, device, [input_tensor])
+    check_functions_are_equivalent(fn, device, [input_tensor], compiler=compiler_to_use)
 
 
-def test_gelu_negative_values(device: str):
+def test_gelu_negative_values(device: str, compiler_to_use):
     def fn(x):
         return F.gelu(x)
 
     input_tensor = torch.randn(5, 10) - 2.0  # Mostly negative values
-    check_functions_are_equivalent(fn, device, [input_tensor])
+    check_functions_are_equivalent(fn, device, [input_tensor], compiler=compiler_to_use)
 
 
 def test_softmax_basic(device: str):
