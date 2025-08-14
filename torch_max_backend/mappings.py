@@ -872,44 +872,6 @@ def torch_foreach_add_equivalent(tensors, others, alpha=1.0):
     return result
 
 
-def torch_slice_equivalent(input, dim, start: int, end: int, step: int = 1):
-    if end == 2**63 - 1:  # MAX_INT64
-        end = None
-    slices = [slice(None)] * len(input.shape)
-    slices[dim] = slice(start, end, step)
-    return input[*slices]
-
-
-def torch_split_with_sizes_equivalent(input, split_sizes, dim=0):
-    result = []
-    start = 0
-    for size in split_sizes:
-        end = start + size
-        result.append(torch_slice_equivalent(input, dim, start, end))
-        start = end
-    return result
-
-
-def torch_scalar_tensor_equivalent(
-    value: float | int,
-    dtype: torch.dtype = None,
-    layout: torch.layout = None,
-    device: torch.device = None,
-):
-    if dtype is None:
-        dtype = torch.float32
-    if device is None:
-        device = torch.get_default_device()
-
-    return max_ops.constant(
-        value, dtype=DType.from_torch(dtype), device=max_device_ref(device)
-    )
-
-
-def torch_aten_where_equivalent(input, condition, other):
-    return max_ops.where(input, condition, other)
-
-
 def identity(x):
     return x
 
@@ -997,10 +959,6 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.convolution: torch_aten_convolution_equivalent,
     aten.select: torch_select_equivalent,
     aten._to_copy: torch_to_equivalent,
-    aten.slice: torch_slice_equivalent,
     aten.expand: torch_aten_expand_equivalent,
     aten.alias: identity,
-    aten.split_with_sizes: torch_split_with_sizes_equivalent,
-    aten.scalar_tensor: torch_scalar_tensor_equivalent,
-    aten.where: torch_aten_where_equivalent,
 }

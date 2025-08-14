@@ -6,6 +6,7 @@ The only ressources I could find on the subject are:
 """
 
 import operator
+from max.torch.torch import max_device_ref
 
 import max.graph.ops as max_ops
 from max.dtype import DType
@@ -13,6 +14,7 @@ from torch.ops import aten
 from torch_max_backend.mappings import (
     MAPPING_TORCH_TO_MOJO_FUNCTIONS as MAPPING_TORCH_ATEN_TO_MAX,
 )
+import torch
 
 IDENTICAL_FUNCTIONS = [
     operator.add,
@@ -535,7 +537,26 @@ def aten_native_layer_norm(input, normalized_shape, weight, bias, eps):
 # resize_(Tensor(a!) self, SymInt[] size, *, MemoryFormat? memory_format=None) -> Tensor(a!)
 # round(Tensor self) -> Tensor
 # rsqrt(Tensor self) -> Tensor
+
+
 # scalar_tensor(Scalar s, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool? pin_memory=None) -> Tensor
+@map_to(aten.scalar_tensor)
+def aten_scalar_tensor(
+    value: float | int,
+    dtype: torch.dtype = None,
+    layout: torch.layout = None,
+    device: torch.device = None,
+):
+    if dtype is None:
+        dtype = torch.float32
+    if device is None:
+        device = torch.get_default_device()
+
+    return max_ops.constant(
+        value, dtype=DType.from_torch(dtype), device=max_device_ref(device)
+    )
+
+
 # scatter.src(Tensor self, int dim, Tensor index, Tensor src) -> Tensor
 # scatter.value(Tensor self, int dim, Tensor index, Scalar value) -> Tensor
 # scatter_add(Tensor self, int dim, Tensor index, Tensor src) -> Tensor
@@ -553,10 +574,34 @@ def aten_sigmoid(input):
 # sign(Tensor self) -> Tensor
 # sin(Tensor self) -> Tensor
 # sinh(Tensor self) -> Tensor
+
+
 # slice.Tensor(Tensor(a) self, int dim=0, SymInt? start=None, SymInt? end=None, SymInt step=1) -> Tensor(a)
+@map_to(aten.slice)
+def aten_slice(input, dim, start: int, end: int, step: int = 1):
+    if end == 2**63 - 1:  # MAX_INT64
+        end = None
+    slices = [slice(None)] * len(input.shape)
+    slices[dim] = slice(start, end, step)
+    return input[*slices]
+
+
 # slice_scatter(Tensor self, Tensor src, int dim=0, SymInt? start=None, SymInt? end=None, SymInt step=1) -> Tensor
 # sort(Tensor self, int dim=-1, bool descending=False) -> (Tensor values, Tensor indices)
+
+
 # split_with_sizes(Tensor(a -> *) self, SymInt[] split_sizes, int dim=0) -> Tensor(a)[]
+@map_to(aten.split_with_sizes)
+def aten_split_with_sizes(input, split_sizes, dim=0):
+    result = []
+    start = 0
+    for size in split_sizes:
+        end = start + size
+        result.append(aten_slice(input, dim, start, end))
+        start = end
+    return result
+
+
 # sqrt(Tensor self) -> Tensor
 # squeeze.dim(Tensor(a) self, int dim) -> Tensor(a)
 # squeeze.dims(Tensor(a) self, int[] dim) -> Tensor(a)
@@ -577,4 +622,9 @@ def aten_sigmoid(input):
 # var.correction(Tensor self, int[1]? dim=None, *, Scalar? correction=None, bool keepdim=False) -> Tensor
 # var.dim(Tensor self, int[1]? dim, bool unbiased=True, bool keepdim=False) -> Tensor
 # view(Tensor(a) self, SymInt[] size) -> Tensor(a)
+
+
 # where.self(Tensor condition, Tensor self, Tensor other) -> Tensor
+@map_to(aten.where)
+def torch_aten_where_equivalent(input, condition, other):
+    return max_ops.where(input, condition, other)
