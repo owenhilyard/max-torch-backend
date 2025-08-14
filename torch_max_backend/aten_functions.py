@@ -983,6 +983,15 @@ def aten_log(input):
 
 # log10(Tensor self) -> Tensor
 # log1p(Tensor self) -> Tensor
+@map_to(aten.log1p)
+def aten_log1p(input):
+    """
+    Returns a new tensor with the natural logarithm of (1 + input).
+    This function is more numerically stable than log(1 + input) for small values of input.
+    """
+    return max_ops.log1p(input)
+
+
 # log2(Tensor self) -> Tensor
 
 
