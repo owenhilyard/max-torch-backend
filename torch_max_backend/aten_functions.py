@@ -175,8 +175,19 @@ def aten__to_copy(tensor, *args, **kwargs):
 # acos(Tensor self) -> Tensor
 # acosh(Tensor self) -> Tensor
 # adaptive_avg_pool1d(Tensor self, int[1] output_size) -> Tensor
+
+
 # add.Scalar(Tensor self, Scalar other, Scalar alpha=1) -> Tensor
 # add.Tensor(Tensor self, Tensor other, *, Scalar alpha=1) -> Tensor
+@map_to(aten.add)
+def aten_add(input, other, *, alpha=1):
+    if alpha != 1:
+        raise NotImplementedError(
+            "The 'alpha' argument is not supported in the aten.add equivalent."
+        )
+    return input + other
+
+
 # addmm(Tensor self, Tensor mat1, Tensor mat2, *, Scalar beta=1, Scalar alpha=1) -> Tensor
 
 
@@ -266,7 +277,7 @@ def aten_clone(input, *, memory_format=None):
 
 # convolution(Tensor input, Tensor weight, Tensor? bias, SymInt[] stride, SymInt[] padding, SymInt[] dilation, bool transposed, SymInt[] output_padding, SymInt groups) -> Tensor
 @map_to(aten.convolution)
-def torch_aten_convolution_equivalent(
+def aten_convolution(
     input, weight, bias, stride, padding, dilation, transposed, output_padding, groups
 ):
     # For now, we only support the 2D case that maps to F.conv2d
@@ -386,8 +397,15 @@ def torch_aten_expand_equivalent(tensor, size: list[int]):
 # full(SymInt[] size, Scalar fill_value, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool? pin_memory=None) -> Tensor
 # full_like(Tensor self, Scalar fill_value, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool? pin_memory=None, MemoryFormat? memory_format=None) -> Tensor
 # gather(Tensor self, int dim, Tensor index, *, bool sparse_grad=False) -> Tensor
+
+
 # ge.Scalar(Tensor self, Scalar other) -> Tensor
 # ge.Tensor(Tensor self, Tensor other) -> Tensor
+@map_to(aten.ge)
+def aten_ge(input, other):
+    return input >= other
+
+
 # gelu(Tensor self, *, str approximate=’none’) -> Tensor
 # grid_sampler_2d(Tensor input, Tensor grid, int interpolation_mode, int padding_mode, bool align_corners) -> Tensor
 # gt.Scalar(Tensor self, Scalar other) -> Tensor
@@ -415,8 +433,15 @@ def aten_index(input, indices=None):
 # index_select(Tensor self, int dim, Tensor index) -> Tensor
 # isinf(Tensor self) -> Tensor
 # isnan(Tensor self) -> Tensor
+
+
 # le.Scalar(Tensor self, Scalar other) -> Tensor
 # le.Tensor(Tensor self, Tensor other) -> Tensor
+@map_to(aten.le)
+def aten_le(input, other):
+    return input <= other
+
+
 # leaky_relu(Tensor self, Scalar negative_slope=0.01) -> Tensor
 # log(Tensor self) -> Tensor
 # log10(Tensor self) -> Tensor
@@ -461,8 +486,15 @@ def aten_logical_not(input):
 
 # logical_or(Tensor self, Tensor other) -> Tensor
 # logical_xor(Tensor self, Tensor other) -> Tensor
+
+
 # lt.Scalar(Tensor self, Scalar other) -> Tensor
 # lt.Tensor(Tensor self, Tensor other) -> Tensor
+@map_to(aten.lt)
+def aten_lt(input, other):
+    return input < other
+
+
 # masked_scatter(Tensor self, Tensor mask, Tensor source) -> Tensor
 # max.dim(Tensor self, int dim, bool keepdim=False) -> (Tensor values, Tensor indices)
 
@@ -546,8 +578,15 @@ def aten_mean(input, dim=None, keepdim=False, *, dtype=None):
 # min.dim(Tensor self, int dim, bool keepdim=False) -> (Tensor values, Tensor indices)
 # minimum(Tensor self, Tensor other) -> Tensor
 # mm(Tensor self, Tensor mat2) -> Tensor
+
+
 # mul.Scalar(Tensor self, Scalar other) -> Tensor
 # mul.Tensor(Tensor self, Tensor other) -> Tensor
+@map_to(aten.mul)
+def aten_mul(input, other):
+    return input * other
+
+
 # native_dropout(Tensor input, float p, bool? train) -> (Tensor, Tensor)
 
 
@@ -769,8 +808,19 @@ def aten_split_with_sizes(input, split_sizes, dim=0):
 # sqrt(Tensor self) -> Tensor
 # squeeze.dim(Tensor(a) self, int dim) -> Tensor(a)
 # squeeze.dims(Tensor(a) self, int[] dim) -> Tensor(a)
+
+
 # sub.Scalar(Tensor self, Scalar other, Scalar alpha=1) -> Tensor
 # sub.Tensor(Tensor self, Tensor other, *, Scalar alpha=1) -> Tensor
+@map_to(aten.sub)
+def aten_sub(input, other, *, alpha=1):
+    if alpha != 1:
+        raise NotImplementedError(
+            "The 'alpha' argument is not supported in the aten.sub equivalent."
+        )
+    return input - other
+
+
 # sum.dim_IntList(Tensor self, int[1]? dim, bool keepdim=False, *, ScalarType? dtype=None) -> Tensor
 # sym_numel(Tensor self) -> SymInt
 # sym_size.int(Tensor self, int dim) -> SymInt
