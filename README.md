@@ -98,7 +98,37 @@ model = model.to(device)
 
 ## Supported Operations
 
-The backend currently supports every op listed in [`mappings.py`](https://github.com/gabrieldemarmiesse/max-torch-backend/blob/main/torch_max_backend/mappings.py)
+The backend currently supports operations defined in [`aten_functions.py`](https://github.com/gabrieldemarmiesse/max-torch-backend/blob/main/torch_max_backend/aten_functions.py). You can view the mapping dictionary by importing `MAPPING_TORCH_ATEN_TO_MAX`.
+
+## Extending the Backend
+
+You can add support for new PyTorch operations without cloning the repository by creating custom mappings:
+
+```python
+from torch_max_backend import MAPPING_TORCH_ATEN_TO_MAX
+from torch.ops import aten
+import max_ops
+
+# Example: Add support for a new operation
+def my_custom_tanh(x):
+    return max_ops.tanh(x)
+
+# Register the operation
+MAPPING_TORCH_ATEN_TO_MAX[aten.tanh] = my_custom_tanh
+
+# Now you can use it with torch.compile
+import torch
+from torch_max_backend import max_backend
+
+@torch.compile(backend=max_backend)
+def my_function(x):
+    return torch.tanh(x)  # Will now use your custom implementation
+```
+
+This approach allows you to:
+- Add missing operations your models need
+- Override existing implementations with optimized versions
+- Prototype new MAX operations before contributing them back
 
 ## Performance Tips
 
