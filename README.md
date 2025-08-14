@@ -13,12 +13,12 @@ pip install git+https://github.com/gabrieldemarmiesse/max-torch-backend.git
 ### Basic Usage
 
 ```python
-from torch_max_backend import MaxCompiler
+from torch_max_backend import max_backend
 import torch
 
 # Compile your model with MAX backend
 model = YourModel()
-compiled_model = torch.compile(model, backend=MaxCompiler)
+compiled_model = torch.compile(model, backend=max_backend)
 
 # Use normally - now accelerated by MAX
 output = compiled_model(input_tensor)
@@ -28,9 +28,9 @@ output = compiled_model(input_tensor)
 
 ```python
 import torch
-from torch_max_backend import MaxCompiler
+from torch_max_backend import max_backend
 
-@torch.compile(backend=MaxCompiler)
+@torch.compile(backend=max_backend)
 def simple_math(x, y):
     return x + y * 2
 
@@ -45,7 +45,7 @@ print(simple_math(a, b))  # Accelerated execution
 Training works as expected 
 
 ```python
-from torch_max_backend import MaxCompiler
+from torch_max_backend import max_backend
 import torch
 import torch.nn
 import torch.optim
@@ -63,7 +63,7 @@ device = "cuda"
 model = MyModel().to(device)
 optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
 
-@torch.compile(backend=MaxCompiler)
+@torch.compile(backend=max_backend)
 def train_step(x, y):
     model.train()
     optimizer.zero_grad()

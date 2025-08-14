@@ -8,30 +8,39 @@ This is a PyTorch backend implementation using Modular's MAX framework. The proj
 
 ## Dependencies and Setup
 
-- **Python**: >=3.12 required
+- **Python**: >=3.11 required (per pyproject.toml)
 - **Key Dependencies**: 
-  - `modular>=25.4.0` (from Modular's nightly index)
-  - `torch>=2.7.0`
-  - `tabulate>=0.9.0`
+  - `max` (Modular's MAX framework)
+  - `torch` (PyTorch)
+  - `tabulate` (for formatted output)
 - **Development Dependencies**:
-  - `pytest>=8.4.1` (for testing)
+  - `pytest>=8.4.1` with plugins (`pytest-xdist`, `pytest-forked`, `pytest-split`)
   - `ruff>=0.12.7` (for linting/formatting)
+  - `transformers>=4.54.1`, `accelerate>=1.10.0` (for model examples)
+  - `torchvision>=0.22.1`, `pillow>=11.3.0` (for vision tasks)
 - **Package Manager**: Uses `uv` for dependency management
-- **Package Index**: Configured to use Modular's nightly Python index at `https://dl.modular.com/public/nightly/python/simple/`
 
 ## Common Commands
 
 ```bash
-# Run tests
-uv run pytest -v -n 5
+# Run tests (with parallel execution and forking for isolation)
+uv run pytest -v -n 2 --forked
 
 # Run specific test file
 uv run pytest tests/test_compiler.py
 
+# Run with profiling enabled
+TORCH_MAX_BACKEND_PROFILE=1 uv run pytest tests/test_compiler.py
+
+# Run with verbose output (shows graph structures)
+TORCH_MAX_BACKEND_VERBOSE=1 uv run pytest tests/test_compiler.py
 
 # Run linter/formatter
 uv run ruff check .
 uv run ruff format .
+
+# Or use pre-commit for all checks
+uvx pre-commit run --all-files
 ```
 
 ## Project Structure
@@ -39,23 +48,27 @@ uv run ruff format .
 ```
 max-torch-backend/
 ├── torch_max_backend/       # Main package
-│   ├── __init__.py         # Package exports
+│   ├── __init__.py         # Package exports (max_backend, get_accelerators)
 │   ├── compiler.py         # Core compiler implementation
 │   ├── mappings.py         # PyTorch to MAX/Mojo operation mappings
-│   └── ops.py              # Custom MAX operation wrapper
+│   └── flags.py            # Environment variable handling for profiling/verbose
 ├── tests/                  # Test suite
 │   ├── conftest.py        # Pytest fixtures
-│   ├── test_compiler.py   # Basic compilation tests
-│   └── test_unsupported_ops.py  # Tests for unsupported operations
+│   └── test_compiler.py   # Basic compilation tests
+├── pretrained_models/      # Example model implementations
+│   ├── run_gpt2.py        # GPT-2 model example
+│   └── run_vgg.py         # VGG model example
+├── ressources/             # Reference materials
+│   └── aten_ops.txt       # Complete list of PyTorch ATen operation signatures
 ├── pyproject.toml         # Project configuration
 ├── uv.lock               # Dependency lock file
 ├── CLAUDE.md            # This file
-└── README.md           # Project documentation
+└── README.md           # Project documentation and usage examples
 ```
 
 ## Architecture
 
-The project implements a custom PyTorch compiler backend (`my_compiler`) that:
+The project implements a custom PyTorch compiler backend (`max_backend`, aliased as `max_backend` in README examples) that:
 
 1. **Graph Analysis**: Takes PyTorch FX graphs and analyzes their structure
 2. **Operation Mapping**: Maps PyTorch operations to Mojo/MAX equivalents via `MAPPING_TORCH_TO_MOJO_FUNCTIONS`
@@ -65,18 +78,20 @@ The project implements a custom PyTorch compiler backend (`my_compiler`) that:
 ### Key Components
 
 #### `torch_max_backend/compiler.py`
-- **`my_compiler`**: Main compiler function that:
+- **`max_backend`**: Main compiler function exported to users
+- **`get_accelerators`**: Function to query available MAX accelerators (CPU + GPU if supported)
+- **Compilation Process**: 
   - Accepts FX GraphModule and example inputs
-  - Prints graph structure for debugging
+  - Optionally prints graph structure for debugging (controlled by `TORCH_MAX_BACKEND_VERBOSE`)
   - Uses meta tensors to track shapes without memory allocation
-  - Creates runtime function `max_add_i_want_to_use` that executes graph nodes
+  - Creates runtime function that executes graph nodes
   - Returns wrapped function compatible with PyTorch
 
-#### `torch_max_backend/ops.py`
-- **`MyMaxOp`**: Custom MAX operation class that:
-  - Extends `MaxOp` from `max.torch.torch`
-  - Dynamically generates torch signatures based on input/output counts
-  - Uses inspect.Signature to define parameter structure
+#### `torch_max_backend/flags.py`
+- **Environment Variable Support**:
+  - `TORCH_MAX_BACKEND_PROFILE` / `PYTORCH_MAX_BACKEND_PROFILE`: Enable timing profiling
+  - `TORCH_MAX_BACKEND_VERBOSE` / `PYTORCH_MAX_BACKEND_VERBOSE`: Enable verbose graph output
+  - Both accept values: "1", "true", "yes" (case-insensitive)
 
 #### `torch_max_backend/mappings.py`
 - **`MAPPING_TORCH_TO_MOJO_FUNCTIONS`**: Dictionary mapping PyTorch ops to MAX/Mojo equivalents
@@ -87,50 +102,61 @@ The project implements a custom PyTorch compiler backend (`my_compiler`) that:
 
 ### Compilation Flow
 
-1. PyTorch function decorated with `@torch.compile(backend=my_compiler)`
-2. FX graph generated and passed to `my_compiler`
+1. PyTorch function decorated with `@torch.compile(backend=max_backend)` or `@torch.compile(backend=max_backend)`
+2. FX graph generated and passed to `max_backend`
 3. Graph nodes processed sequentially:
    - `placeholder` nodes map to function arguments
-   - `call_function` nodes execute mapped operations
+   - `call_function` nodes execute mapped operations via `MAPPING_TORCH_TO_MOJO_FUNCTIONS`
    - `output` nodes return results as tuple
-4. Custom MAX operation created via `MyMaxOp` with:
+4. Custom MAX operation created with:
    - Runtime function
    - CustomOpLibrary with KernelLibrary and MLIR context
-   - Input/output type information
-5. Compiled function allocates output tensors and executes custom op
+   - Input/output type information from meta tensors
+5. Compiled function allocates output tensors and executes custom op on specified device
 
 ## Testing
 
 ### Test Coverage
-- **Basic Operations**: Addition on CPU and CUDA devices
-- **Unsupported Operations**: 
-  - Mathematical: `exp`, `log`, `sqrt`, `tanh`
-  - Matrix operations: `matmul`
-  - Tensor operations: `cat`, `mean`, `max`
-  - Shape operations: `reshape` (marked as xfail)
+- **Basic Operations**: Arithmetic operations on available devices
+- **Device Support**: Tests run on CPU and CUDA (if available via `get_accelerators()`)
+- **Compilation**: Verifies that `@torch.compile(backend=max_backend)` works correctly
+- **Error Handling**: Tests for unsupported operations raise appropriate errors
 
-### Test Fixtures
-- `tensor_shapes`: Common tensor shapes for testing
-- `devices`: Available devices (CPU, CUDA if available)
+### Test Fixtures  
+- `tensor_shapes`: Common tensor shapes for testing (various sizes and dimensions)
+- `devices`: Available devices determined by MAX accelerator detection
 
 ## Current Limitations
 
-1. **Limited Operation Support**: Only basic arithmetic and trigonometric functions
-2. **No Complex Operations**: Matrix multiplication, reductions, reshaping not yet supported
-3. **Debug Output**: Compiler prints tabular graph representation (should be configurable)
+1. **Limited Operation Support**: Only operations listed in `mappings.py` are supported
+2. **No Complex Operations**: Matrix multiplication, reductions, reshaping not yet implemented  
+3. **GPU Compatibility**: Not all NVIDIA/AMD GPUs are supported by MAX - use `get_accelerators()` to check
 4. **Error Handling**: Raises ValueError for unsupported operations
 
 ## Development Notes
 
-- Uses Ruff for code formatting with:
-  - Target Python 3.12
-  - pyupgrade rules enabled
-  - Magic trailing comma skipped in formatting
-- Project configured for Modular's nightly builds
-- Tests parametrized for multiple devices when available
-- The directory `../modular/` contains the python code for the max graph. You can look inside to find out how the max graph is implemented. You can find examples of graphs in `modular/max/pipelines/architectures`.
-- The directory `../pytorch/` contains the PyTorch source code. It might be helpful to look inside as 
-  many things in `torch.compile` are not documented correctly.
-  
+- **Code Quality**: Uses Ruff for linting/formatting with Python 3.11+ target and pyupgrade rules
+- **Testing Strategy**: Tests use `pytest-forked` for process isolation and `pytest-xdist` for parallelization
+- **Debugging Tools**: 
+  - Environment variables for profiling and verbose output
+  - Graph visualization when `TORCH_MAX_BACKEND_VERBOSE=1`
+- **Model Examples**: `pretrained_models/` contains GPT-2 and VGG examples showing real-world usage
+- **Reference Materials**: 
+  - `ressources/aten_ops.txt` contains complete PyTorch ATen operation signatures
+  - The directory `../modular/` contains MAX graph implementation examples
+  - The directory `../pytorch/` contains PyTorch source for `torch.compile` internals
 
-The signature of all aten ops are in ressources/aten_ops.txt. Feel free to look inside if you need.
+## Usage Examples from README
+
+The backend is used via standard `torch.compile` syntax:
+
+```python
+from torch_max_backend import max_backend  # or max_backend
+import torch
+
+@torch.compile(backend=max_backend)
+def my_function(x, y):
+    return x + y * 2
+```
+
+Device compatibility should be checked using `get_accelerators()` before GPU usage.
