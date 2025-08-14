@@ -15,6 +15,8 @@ from torch_max_backend.mappings import (
     MAPPING_TORCH_TO_MOJO_FUNCTIONS as MAPPING_TORCH_ATEN_TO_MAX,
 )
 import torch
+from max.graph.type import DeviceRef
+import max.graph.type as max_type
 
 IDENTICAL_FUNCTIONS = [
     operator.add,
@@ -111,7 +113,64 @@ def aten__adaptive_avg_pool2d(input, output_size):
 # _native_batch_norm_legit_no_training(Tensor input, Tensor? weight, Tensor? bias, Tensor running_mean, Tensor running_var, float momentum, float eps) -> (Tensor, Tensor, Tensor)
 # _pdist_forward(Tensor self, float p=2) -> Tensor
 # _softmax(Tensor self, int dim, bool half_to_float) -> Tensor
+
+
 # _to_copy(Tensor self, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool? pin_memory=None, bool non_blocking=False, MemoryFormat? memory_format=None) -> Tensor
+@map_to(aten._to_copy)
+def aten__to_copy(tensor, *args, **kwargs):
+    # Let's support simple stuff for now.
+    # TODO: refactor this, this is so ugly
+    kwargs = kwargs.copy()
+    device = None
+    dtype = None
+    if len(args) > 1:
+        raise ValueError(
+            f"Only one argument is supported for torch.to equivalent for now. got {args}"
+        )
+    device = kwargs.pop("device", None)
+    dtype = kwargs.pop("dtype", None)
+    kwargs.pop("layout", None)  # Ignore layout for now
+    if dtype is not None:
+        dtype = DType.from_torch(dtype)
+
+    # Handle device string conversion
+    if isinstance(device, str):
+        if device == "cpu":
+            device = DeviceRef.CPU()
+        elif device == "cuda":
+            device = DeviceRef.GPU()
+        else:
+            raise ValueError(f"Unsupported device string: {device}")
+    elif isinstance(device, torch.device):
+        device = max_device_ref(device)
+
+    if kwargs:
+        raise ValueError(
+            f"Unsupported arguments for torch.to equivalent: {kwargs}. Only 'device' and 'dtype' are supported."
+        )
+    if args:
+        first_arg = args[0]
+        if first_arg == "cpu":
+            device = DeviceRef.CPU()
+        elif first_arg == "cuda":
+            device = DeviceRef.GPU()
+        elif isinstance(first_arg, torch.device):
+            device = max_device_ref(first_arg)
+        elif isinstance(first_arg, torch.dtype):
+            dtype = DType.from_torch(first_arg)
+
+    result = tensor
+    if device is not None:
+        result = max_ops.transfer_to(result, device=device)
+    if dtype is not None:
+        result = max_ops.cast(result, dtype=dtype)
+    if device is None and dtype is None:
+        raise ValueError(
+            "Either 'device' or 'dtype' must be specified for torch.to equivalent."
+        )
+    return result
+
+
 # abs(Tensor self) -> Tensor
 # acos(Tensor self) -> Tensor
 # acosh(Tensor self) -> Tensor
@@ -203,7 +262,64 @@ def aten_clone(input, *, memory_format=None):
 
 # col2im(Tensor self, SymInt[2] output_size, int[2] kernel_size, int[2] dilation, int[2] padding, int[2] stride) -> Tensor
 # constant_pad_nd(Tensor self, SymInt[] pad, Scalar value=0) -> Tensor
+
+
 # convolution(Tensor input, Tensor weight, Tensor? bias, SymInt[] stride, SymInt[] padding, SymInt[] dilation, bool transposed, SymInt[] output_padding, SymInt groups) -> Tensor
+@map_to(aten.convolution)
+def torch_aten_convolution_equivalent(
+    input, weight, bias, stride, padding, dilation, transposed, output_padding, groups
+):
+    # For now, we only support the 2D case that maps to F.conv2d
+    if transposed:
+        raise NotImplementedError("Transposed convolution is not supported yet")
+    if any(p != 0 for p in output_padding):
+        raise NotImplementedError("Output padding is not supported yet")
+
+    if groups != 1:
+        raise NotImplementedError("Grouped convolution is not supported yet.")
+
+    if isinstance(stride, int):
+        stride = (stride, stride)
+    if isinstance(padding, int):
+        padding = (padding, padding, padding, padding)
+    elif isinstance(padding, str):
+        raise ValueError("Padding must be an int or a tuple of ints.")
+    elif isinstance(padding, tuple | list):
+        if len(padding) == 2:
+            # PyTorch padding=(pad_h, pad_w) -> MAX padding=(pad_h_before, pad_h_after, pad_w_before, pad_w_after)
+            padding = (padding[0], padding[0], padding[1], padding[1])
+        elif len(padding) == 4:
+            # Already in MAX format
+            padding = tuple(padding)
+        else:
+            raise ValueError(f"Unsupported padding length: {len(padding)}")
+    if isinstance(dilation, int):
+        dilation = (dilation, dilation)
+
+    # Convert input from NCHW (PyTorch default) to NHWC (MAX requirement)
+    # NCHW: [batch, channels, height, width] -> NHWC: [batch, height, width, channels]
+    input_nhwc = input.permute([0, 2, 3, 1])
+
+    # Convert weight from PyTorch OIHW: [out_channels, in_channels, kernel_h, kernel_w]
+    # to MAX RSCF: [kernel_h, kernel_w, in_channels, out_channels]
+    weight_rscf = weight.permute([2, 3, 1, 0])
+
+    result = max_ops.conv2d(
+        input_nhwc,
+        weight_rscf,
+        bias=bias,
+        stride=stride,
+        padding=padding,
+        dilation=dilation,
+        input_layout=max_type.ConvInputLayout.NHWC,
+        filter_layout=max_type.FilterLayout.RSCF,
+    )
+
+    # Convert result back from NHWC to NCHW for PyTorch compatibility
+    # NHWC: [batch, height, width, channels] -> NCHW: [batch, channels, height, width]
+    return result.permute([0, 3, 1, 2])
+
+
 # convolution_backward(Tensor grad_output, Tensor input, Tensor weight, SymInt[]? bias_sizes, SymInt[] stride, SymInt[] padding, SymInt[] dilation, bool transposed, SymInt[] output_padding, SymInt groups, bool[3] output_mask) -> (Tensor, Tensor, Tensor)
 # copy(Tensor self, Tensor src, bool non_blocking=False) -> Tensor
 # cos(Tensor self) -> Tensor
@@ -598,8 +714,19 @@ def aten_scalar_tensor(
 # scatter.value(Tensor self, int dim, Tensor index, Scalar value) -> Tensor
 # scatter_add(Tensor self, int dim, Tensor index, Tensor src) -> Tensor
 # scatter_reduce.two(Tensor self, int dim, Tensor index, Tensor src, str reduce, *, bool include_self=True) -> Tensor
+
+
 # select.int(Tensor(a) self, int dim, SymInt index) -> Tensor(a)
 # select_scatter(Tensor self, Tensor src, int dim, SymInt index) -> Tensor
+@map_to(aten.select)
+def aten_select(input: max_ops.TensorType, dim: int, index: int):
+    """
+    Equivalent to torch.select - selects a slice of the tensor along the given dimension at the given index.
+    """
+    nb_dims = len(input.shape)
+    slices = [slice(None)] * nb_dims
+    slices[dim] = index
+    return input[slices]
 
 
 # sigmoid(Tensor self) -> Tensor

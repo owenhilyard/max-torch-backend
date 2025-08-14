@@ -2,7 +2,6 @@ import operator
 
 import max.graph.ops as max_ops
 import torch
-from max.graph.type import DeviceRef
 from max.torch.torch import max_device_ref
 from max.dtype import DType
 from max.graph import StaticDim, Dim
@@ -18,54 +17,6 @@ def torch_cat_equivalent(tensors: list, dim=0):
 
 def torch_stack_equivalent(tensors: list, dim=0):
     return max_ops.stack(tensors, axis=dim)
-
-
-def torch_conv2d_equivalent(
-    input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1
-):
-    if groups != 1:
-        raise NotImplementedError("Grouped convolution is not supported yet.")
-
-    if isinstance(stride, int):
-        stride = (stride, stride)
-    if isinstance(padding, int):
-        padding = (padding, padding, padding, padding)
-    elif isinstance(padding, str):
-        raise ValueError("Padding must be an int or a tuple of ints.")
-    elif isinstance(padding, tuple | list):
-        if len(padding) == 2:
-            # PyTorch padding=(pad_h, pad_w) -> MAX padding=(pad_h_before, pad_h_after, pad_w_before, pad_w_after)
-            padding = (padding[0], padding[0], padding[1], padding[1])
-        elif len(padding) == 4:
-            # Already in MAX format
-            padding = tuple(padding)
-        else:
-            raise ValueError(f"Unsupported padding length: {len(padding)}")
-    if isinstance(dilation, int):
-        dilation = (dilation, dilation)
-
-    # Convert input from NCHW (PyTorch default) to NHWC (MAX requirement)
-    # NCHW: [batch, channels, height, width] -> NHWC: [batch, height, width, channels]
-    input_nhwc = input.permute([0, 2, 3, 1])
-
-    # Convert weight from PyTorch OIHW: [out_channels, in_channels, kernel_h, kernel_w]
-    # to MAX RSCF: [kernel_h, kernel_w, in_channels, out_channels]
-    weight_rscf = weight.permute([2, 3, 1, 0])
-
-    result = max_ops.conv2d(
-        input_nhwc,
-        weight_rscf,
-        bias=bias,
-        stride=stride,
-        padding=padding,
-        dilation=dilation,
-        input_layout=max_type.ConvInputLayout.NHWC,
-        filter_layout=max_type.FilterLayout.RSCF,
-    )
-
-    # Convert result back from NHWC to NCHW for PyTorch compatibility
-    # NHWC: [batch, height, width, channels] -> NCHW: [batch, channels, height, width]
-    return result.permute([0, 3, 1, 2])
 
 
 def torch_aten_embedding_equivalent(
@@ -132,60 +83,6 @@ def torch_autocast_equivalent(*args, **kwargs):
 
 def torch_float_equivalent(tensor):
     return max_ops.cast(tensor, dtype=max_type.DType.float32)
-
-
-def torch_to_equivalent(tensor, *args, **kwargs):
-    # Let's support simple stuff for now.
-    # TODO: refactor this, this is so ugly
-    kwargs = kwargs.copy()
-    device = None
-    dtype = None
-    if len(args) > 1:
-        raise ValueError(
-            f"Only one argument is supported for torch.to equivalent for now. got {args}"
-        )
-    device = kwargs.pop("device", None)
-    dtype = kwargs.pop("dtype", None)
-    kwargs.pop("layout", None)  # Ignore layout for now
-    if dtype is not None:
-        dtype = DType.from_torch(dtype)
-
-    # Handle device string conversion
-    if isinstance(device, str):
-        if device == "cpu":
-            device = DeviceRef.CPU()
-        elif device == "cuda":
-            device = DeviceRef.GPU()
-        else:
-            raise ValueError(f"Unsupported device string: {device}")
-    elif isinstance(device, torch.device):
-        device = max_device_ref(device)
-
-    if kwargs:
-        raise ValueError(
-            f"Unsupported arguments for torch.to equivalent: {kwargs}. Only 'device' and 'dtype' are supported."
-        )
-    if args:
-        first_arg = args[0]
-        if first_arg == "cpu":
-            device = DeviceRef.CPU()
-        elif first_arg == "cuda":
-            device = DeviceRef.GPU()
-        elif isinstance(first_arg, torch.device):
-            device = max_device_ref(first_arg)
-        elif isinstance(first_arg, torch.dtype):
-            dtype = DType.from_torch(first_arg)
-
-    result = tensor
-    if device is not None:
-        result = max_ops.transfer_to(result, device=device)
-    if dtype is not None:
-        result = max_ops.cast(result, dtype=dtype)
-    if device is None and dtype is None:
-        raise ValueError(
-            "Either 'device' or 'dtype' must be specified for torch.to equivalent."
-        )
-    return result
 
 
 def torch_transpose_equivalent(tensor, dim0, dim1):
@@ -324,16 +221,6 @@ def torch_unbind_equivalent(
         result.append(squeezed)
 
     return result
-
-
-def torch_select_equivalent(input: max_ops.TensorType, dim: int, index: int):
-    """
-    Equivalent to torch.select - selects a slice of the tensor along the given dimension at the given index.
-    """
-    nb_dims = len(input.shape)
-    slices = [slice(None)] * nb_dims
-    slices[dim] = index
-    return input[slices]
 
 
 def torch_repeat_interleave_equivalent(
@@ -783,27 +670,6 @@ def torch_addmm_equivalent(input, mat1, mat2, *, beta=1.0, alpha=1.0):
     return operator.add(scaled_input, matmul_result)
 
 
-def torch_aten_convolution_equivalent(
-    input, weight, bias, stride, padding, dilation, transposed, output_padding, groups
-):
-    # aten.convolution is more general than F.conv2d
-    # For now, we only support the 2D case that maps to F.conv2d
-    if transposed:
-        raise NotImplementedError("Transposed convolution is not supported yet")
-    if any(p != 0 for p in output_padding):
-        raise NotImplementedError("Output padding is not supported yet")
-
-    return torch_conv2d_equivalent(
-        input=input,
-        weight=weight,
-        bias=bias,
-        stride=stride,
-        padding=padding,
-        dilation=dilation,
-        groups=groups,
-    )
-
-
 def torch_div_equivalent(input, other, *, rounding_mode=None):
     # Handle torch.div with different rounding modes
     if rounding_mode is None:
@@ -922,7 +788,4 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.argmax: torch_argmax_equivalent,
     aten.relu: relu_equivalent,
     aten.embedding: torch_aten_embedding_equivalent,
-    aten.convolution: torch_aten_convolution_equivalent,
-    aten.select: torch_select_equivalent,
-    aten._to_copy: torch_to_equivalent,
 }
