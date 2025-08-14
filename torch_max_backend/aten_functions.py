@@ -119,7 +119,14 @@ def aten__adaptive_avg_pool2d(input, output_size):
 # add.Scalar(Tensor self, Scalar other, Scalar alpha=1) -> Tensor
 # add.Tensor(Tensor self, Tensor other, *, Scalar alpha=1) -> Tensor
 # addmm(Tensor self, Tensor mat1, Tensor mat2, *, Scalar beta=1, Scalar alpha=1) -> Tensor
+
+
 # alias(Tensor(a) self) -> Tensor(a)
+@map_to(aten.alias)
+def aten_alias(input):
+    return input
+
+
 # amax(Tensor self, int[1] dim=[], bool keepdim=False) -> Tensor
 # amin(Tensor self, int[1] dim=[], bool keepdim=False) -> Tensor
 # any(Tensor self) -> Tensor
@@ -224,6 +231,36 @@ def aten_exp(input):
 
 
 # expand(Tensor(a) self, SymInt[] size, *, bool implicit=False) -> Tensor(a)
+@map_to(aten.expand)
+def torch_aten_expand_equivalent(tensor, size: list[int]):
+    target_shape = []
+
+    # Get current tensor shape - we need this to handle -1 values
+    current_shape = tensor.shape
+
+    # Pad the current shape with 1s if target has more dimensions
+    if len(size) > len(current_shape):
+        padded_current_shape = [1] * (len(size) - len(current_shape)) + list(
+            current_shape
+        )
+    else:
+        padded_current_shape = list(current_shape)
+
+    # Process each dimension in the target size
+    for i, dim_size in enumerate(size):
+        if dim_size == -1:
+            # Keep current dimension size
+            if i < len(padded_current_shape):
+                target_shape.append(padded_current_shape[i])
+            else:
+                # This shouldn't happen in well-formed expand calls
+                target_shape.append(1)
+        else:
+            target_shape.append(dim_size)
+
+    return max_ops.broadcast_to(tensor, target_shape)
+
+
 # expm1(Tensor self) -> Tensor
 # fill.Scalar(Tensor self, Scalar value) -> Tensor
 # flip(Tensor self, int[] dims) -> Tensor

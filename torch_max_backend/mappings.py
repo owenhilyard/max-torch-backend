@@ -134,40 +134,6 @@ def torch_float_equivalent(tensor):
     return max_ops.cast(tensor, dtype=max_type.DType.float32)
 
 
-def torch_aten_expand_equivalent(tensor, size: list[int]):
-    return torch_expand_equivalent(tensor, *size)
-
-
-def torch_expand_equivalent(tensor, *size):
-    # Convert size tuple to list and handle -1 values
-    target_shape = []
-
-    # Get current tensor shape - we need this to handle -1 values
-    current_shape = tensor.shape
-
-    # Pad the current shape with 1s if target has more dimensions
-    if len(size) > len(current_shape):
-        padded_current_shape = [1] * (len(size) - len(current_shape)) + list(
-            current_shape
-        )
-    else:
-        padded_current_shape = list(current_shape)
-
-    # Process each dimension in the target size
-    for i, dim_size in enumerate(size):
-        if dim_size == -1:
-            # Keep current dimension size
-            if i < len(padded_current_shape):
-                target_shape.append(padded_current_shape[i])
-            else:
-                # This shouldn't happen in well-formed expand calls
-                target_shape.append(1)
-        else:
-            target_shape.append(dim_size)
-
-    return max_ops.broadcast_to(tensor, target_shape)
-
-
 def torch_to_equivalent(tensor, *args, **kwargs):
     # Let's support simple stuff for now.
     # TODO: refactor this, this is so ugly
@@ -959,6 +925,4 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.convolution: torch_aten_convolution_equivalent,
     aten.select: torch_select_equivalent,
     aten._to_copy: torch_to_equivalent,
-    aten.expand: torch_aten_expand_equivalent,
-    aten.alias: identity,
 }
