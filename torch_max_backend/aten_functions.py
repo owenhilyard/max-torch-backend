@@ -447,7 +447,14 @@ def aten_argmin(input, dim=None, keepdim=False, *, out=None):
 # atan(Tensor self) -> Tensor
 # atan2(Tensor self, Tensor other) -> Tensor
 # atan2.out(Tensor self, Tensor other, *, Tensor(a!) out) -> Tensor(a!)
+
+
 # atanh(Tensor self) -> Tensor
+@map_to(aten.atanh)
+def aten_atanh(x):
+    return max_ops.atanh(x)
+
+
 # avg_pool1d(Tensor self, int[1] kernel_size, int[1] stride=[], int[1] padding=0, bool ceil_mode=False, bool count_include_pad=True) -> Tensor
 # avg_pool2d(Tensor self, int[2] kernel_size, int[2] stride=[], int[2] padding=0, bool ceil_mode=False, bool count_include_pad=True, int? divisor_override=None) -> Tensor
 # avg_pool2d_backward(Tensor grad_output, Tensor self, int[2] kernel_size, int[2] stride, int[2] padding, bool ceil_mode, bool count_include_pad, int? divisor_override) -> Tensor
