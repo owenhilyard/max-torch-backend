@@ -1164,6 +1164,10 @@ def torch_bmm_equivalent(input, mat2):
     return max_ops.matmul(input, mat2)
 
 
+def torch_exp_equivalent(input):
+    return max_ops.exp(input)
+
+
 IDENTICAL_FUNCTIONS = [
     operator.add,
     operator.sub,
@@ -1329,6 +1333,7 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.sigmoid: max_ops.sigmoid,
     aten.max_pool2d_with_indices: torch_max_pool2d_with_indices_equivalent,
     aten.clone: torch_clone_equivalent,
+    aten.exp: torch_exp_equivalent,
     "view": torch_view_equivalent,
     "contiguous": torch_contiguous_equivalent,
     "unsqueeze": torch_unsqueeze_equivalent,

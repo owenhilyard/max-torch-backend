@@ -4027,3 +4027,13 @@ def test_bug_keyerror_input(device: str):
     mark_dynamic(x, 1)
 
     check_functions_are_equivalent(fn, device, [x])
+
+
+def test_exp(device: str):
+    def fn(input):
+        return torch.exp(input)
+
+    # Single batch case
+    input = torch.randn(1, 2, 4)
+
+    check_functions_are_equivalent(fn, device, [input])
