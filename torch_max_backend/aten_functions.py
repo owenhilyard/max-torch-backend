@@ -59,12 +59,12 @@ def map_to(func: callable) -> callable:
 
 # _adaptive_avg_pool2d(Tensor self, SymInt[2] output_size) -> Tensor
 @map_to(aten._adaptive_avg_pool2d)
-def torch_adaptive_avg_pool2d_equivalent(input, output_size):
+def aten__adaptive_avg_pool2d(input, output_size):
     # For now, we'll implement this using global average pooling for (1, 1) output
     # and regular avg pooling for other sizes
     if output_size == (1, 1) or output_size == 1:
         # Global average pooling - take mean over spatial dimensions
-        return torch_mean_equivalent(input, dim=(2, 3), keepdim=True)
+        return aten_mean(input, dim=(2, 3), keepdim=True)
     else:
         # For other output sizes, we'll use avg_pool2d with calculated kernel size and stride
         # Get input spatial dimensions (assuming NCHW format)
@@ -310,7 +310,46 @@ def aten_logical_not(input):
 # lt.Tensor(Tensor self, Tensor other) -> Tensor
 # masked_scatter(Tensor self, Tensor mask, Tensor source) -> Tensor
 # max.dim(Tensor self, int dim, bool keepdim=False) -> (Tensor values, Tensor indices)
+
+
 # max_pool2d_with_indices(Tensor self, int[2] kernel_size, int[2] stride=[], int[2] padding=0, int[2] dilation=1, bool ceil_mode=False) -> (Tensor, Tensor)
+@map_to(aten.max_pool2d_with_indices)
+def aten_max_pool2d_with_indices(
+    input, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False
+) -> tuple[max_ops.TensorType, max_ops.TensorType]:
+    # the first output is the values, the second output is the indices
+    # most of the time people just want the values so we'll implement that
+    # for now.
+    if not stride:
+        stride = kernel_size
+
+    if isinstance(kernel_size, int):
+        kernel_size = (kernel_size, kernel_size)
+    if isinstance(stride, int):
+        stride = (stride, stride)
+    if isinstance(padding, int):
+        padding = (padding, padding)
+    if isinstance(dilation, int):
+        dilation = (dilation, dilation)
+
+    # Convert input from NCHW (PyTorch default) to NHWC (MAX requirement)
+    input_nhwc = input.permute([0, 2, 3, 1])
+
+    result = max_ops.max_pool2d(
+        input_nhwc,
+        kernel_size=kernel_size,
+        stride=tuple(stride),
+        padding=tuple(padding),
+        dilation=tuple(dilation),
+        ceil_mode=ceil_mode,
+    )
+
+    # Convert result back from NHWC to NCHW for PyTorch compatibility
+    forward_result = result.permute([0, 3, 1, 2])
+    # TODO: Add indices
+    return (forward_result,)
+
+
 # max_pool2d_with_indices_backward(Tensor grad_output, Tensor self, int[2] kernel_size, int[2] stride, int[2] padding, int[2] dilation, bool ceil_mode, Tensor indices) -> Tensor
 # max_pool3d_with_indices(Tensor self, int[3] kernel_size, int[3] stride=[], int[3] padding=0, int[3] dilation=1, bool ceil_mode=False) -> (Tensor, Tensor)
 # maximum(Tensor self, Tensor other) -> Tensor
@@ -319,7 +358,7 @@ def aten_logical_not(input):
 # mean(Tensor self, *, ScalarType? dtype=None) -> Tensor
 # mean.dim(Tensor self, int[1]? dim, bool keepdim=False, *, ScalarType? dtype=None) -> Tensor
 @map_to(aten.mean)
-def torch_mean_equivalent(input, dim=None, keepdim=False, *, dtype=None):
+def aten_mean(input, dim=None, keepdim=False, *, dtype=None):
     if dtype is not None:
         max_dtype = DType.from_torch(dtype)
         input = max_ops.cast(input, dtype=max_dtype)
@@ -359,9 +398,8 @@ def torch_mean_equivalent(input, dim=None, keepdim=False, *, dtype=None):
 
 # native_group_norm(Tensor input, Tensor? weight, Tensor? bias, SymInt N, SymInt C, SymInt HxW, int group, float eps) -> (Tensor, Tensor, Tensor)
 @map_to(aten.native_group_norm)
-def native_group_norm(input, weight, bias, N, C, HxW, group, eps):
+def aten_native_group_norm(input, weight, bias, N, C, HxW, group, eps):
     """
-    Equivalent to aten.native_group_norm.
     This is the low-level operation that F.group_norm gets compiled to.
     Returns (normalized_output, mean, rstd) tuple but we only return the first element for simplicity.
     """
@@ -407,13 +445,11 @@ def torch_group_norm_equivalent(input, num_groups, weight=None, bias=None, eps=1
     axis_to_reduce = [2, 3, 4]
 
     # Calculate mean
-    mean = torch_mean_equivalent(reshaped, dim=axis_to_reduce, keepdim=True)
+    mean = aten_mean(reshaped, dim=axis_to_reduce, keepdim=True)
 
     # Calculate variance: Var(X) = E[(X - mean)^2]
     centered = reshaped - mean
-    variance = torch_mean_equivalent(
-        centered * centered, dim=axis_to_reduce, keepdim=True
-    )
+    variance = aten_mean(centered * centered, dim=axis_to_reduce, keepdim=True)
 
     # Normalize: (x - mean) / sqrt(variance + eps)
     normalized = centered / max_ops.sqrt(variance + eps)
@@ -440,7 +476,7 @@ def torch_group_norm_equivalent(input, num_groups, weight=None, bias=None, eps=1
 
 # native_layer_norm(Tensor input, SymInt[] normalized_shape, Tensor? weight, Tensor? bias, float eps) -> (Tensor, Tensor, Tensor)
 @map_to(aten.native_layer_norm)
-def torch_native_layer_norm_equivalent(input, normalized_shape, weight, bias, eps):
+def aten_native_layer_norm(input, normalized_shape, weight, bias, eps):
     # expects a tuple or list for some reason
     # surely for the backward pass,
     # for the moment we only output the first one.
@@ -451,13 +487,11 @@ def torch_native_layer_norm_equivalent(input, normalized_shape, weight, bias, ep
     )
 
     # Calculate mean
-    mean = torch_mean_equivalent(input, dim=axis_to_reduce, keepdim=True)
+    mean = aten_mean(input, dim=axis_to_reduce, keepdim=True)
 
     # Calculate variance: Var(X) = E[(X - mean)^2]
     centered = input - mean
-    variance = torch_mean_equivalent(
-        centered * centered, dim=axis_to_reduce, keepdim=True
-    )
+    variance = aten_mean(centered * centered, dim=axis_to_reduce, keepdim=True)
 
     # Normalize: (x - mean) / sqrt(variance + eps)
     normalized = centered / max_ops.sqrt(variance + eps)
@@ -508,7 +542,14 @@ def torch_native_layer_norm_equivalent(input, normalized_shape, weight, bias, ep
 # scatter_reduce.two(Tensor self, int dim, Tensor index, Tensor src, str reduce, *, bool include_self=True) -> Tensor
 # select.int(Tensor(a) self, int dim, SymInt index) -> Tensor(a)
 # select_scatter(Tensor self, Tensor src, int dim, SymInt index) -> Tensor
+
+
 # sigmoid(Tensor self) -> Tensor
+@map_to(aten.sigmoid)
+def aten_sigmoid(input):
+    return max_ops.sigmoid(input)
+
+
 # sign(Tensor self) -> Tensor
 # sin(Tensor self) -> Tensor
 # sinh(Tensor self) -> Tensor

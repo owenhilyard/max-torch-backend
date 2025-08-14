@@ -274,65 +274,6 @@ def relu_equivalent(tensor, inplace: bool = False):
     return max_ops.relu(tensor)
 
 
-def torch_max_pool2d_with_indices_equivalent(
-    input, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False
-) -> tuple[max_ops.TensorType, max_ops.TensorType]:
-    # the first output is the values, the second output is the indices
-    # most of the time people just want the values so we'll implement that
-    # for now.
-    values = torch_max_pool2d_equivalent(
-        input,
-        kernel_size=kernel_size,
-        stride=stride,
-        padding=padding,
-        dilation=dilation,
-        ceil_mode=ceil_mode,
-        return_indices=False,
-    )
-    # TODO: Add indices
-    return (values,)
-
-
-def torch_max_pool2d_equivalent(
-    input,
-    kernel_size,
-    stride=None,
-    padding=0,
-    dilation=1,
-    ceil_mode=False,
-    return_indices=False,
-):
-    if return_indices:
-        raise NotImplementedError("return_indices=True is not supported yet")
-
-    if not stride:
-        stride = kernel_size
-
-    if isinstance(kernel_size, int):
-        kernel_size = (kernel_size, kernel_size)
-    if isinstance(stride, int):
-        stride = (stride, stride)
-    if isinstance(padding, int):
-        padding = (padding, padding)
-    if isinstance(dilation, int):
-        dilation = (dilation, dilation)
-
-    # Convert input from NCHW (PyTorch default) to NHWC (MAX requirement)
-    input_nhwc = input.permute([0, 2, 3, 1])
-
-    result = max_ops.max_pool2d(
-        input_nhwc,
-        kernel_size=kernel_size,
-        stride=tuple(stride),
-        padding=tuple(padding),
-        dilation=tuple(dilation),
-        ceil_mode=ceil_mode,
-    )
-
-    # Convert result back from NHWC to NCHW for PyTorch compatibility
-    return result.permute([0, 3, 1, 2])
-
-
 def torch_tril_equivalent(input: max_ops.TensorType, diagonal: int = 0, *, out=None):
     # Max doesn't have tril built-in, so we get around this. It should be pretty
     # easy to implement on cpu and gpu though.
@@ -1062,6 +1003,4 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.split_with_sizes: torch_split_with_sizes_equivalent,
     aten.scalar_tensor: torch_scalar_tensor_equivalent,
     aten.where: torch_aten_where_equivalent,
-    aten.sigmoid: max_ops.sigmoid,
-    aten.max_pool2d_with_indices: torch_max_pool2d_with_indices_equivalent,
 }
