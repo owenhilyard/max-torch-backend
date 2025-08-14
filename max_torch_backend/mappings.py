@@ -2,7 +2,6 @@ import operator
 
 import max.graph.ops as max_ops
 import torch
-import torch.nn.functional as F
 import torch.amp.autocast_mode
 from max.graph.type import DeviceRef
 from max.torch.torch import max_device_ref
@@ -291,16 +290,6 @@ def torch_mean_equivalent(input, dim=None, keepdim=False, *, dtype=None):
     return result
 
 
-def torch_linear_equivalent(input, weight, bias=None):
-    weight_t = max_ops.permute(weight, [1, 0])  # Transpose weight
-    result = max_ops.matmul(input, weight_t)
-
-    if bias is not None:
-        result = result + bias
-
-    return result
-
-
 def torch_contiguous_equivalent(tensor):
     return tensor
 
@@ -315,15 +304,6 @@ def torch_view_equivalent(tensor, *shape):
 
 def torch_unsqueeze_equivalent(tensor, dim):
     return max_ops.unsqueeze(tensor, axis=dim)
-
-
-def torch_log_api_usage_once_equivalent(*args, **kwargs):
-    """
-    No-op function for torch._C.PyCapsule._log_api_usage_once.
-    This is an internal PyTorch function used for API usage logging
-    that we can safely ignore in the MAX backend.
-    """
-    pass
 
 
 def relu_equivalent(tensor, inplace: bool = False):
@@ -428,17 +408,6 @@ def torch_adaptive_avg_pool2d_equivalent(input, output_size):
         return result.permute([0, 3, 1, 2])
 
 
-def torch_flatten_equivalent(input, start_dim=1, end_dim=-1):
-    return max_ops.flatten(input, start_dim=start_dim, end_dim=end_dim)
-
-
-def torch_dropout_equivalent(input, p=0.5, training=True, inplace=False):
-    if training:
-        raise NotImplementedError("Dropout is not implemented in the MAX backend. ")
-    else:
-        return input
-
-
 def torch_tril_equivalent(input: max_ops.TensorType, diagonal: int = 0, *, out=None):
     # Max doesn't have tril built-in, so we get around this. It should be pretty
     # easy to implement on cpu and gpu though.
@@ -484,12 +453,6 @@ def torch_triu_equivalent(input: max_ops.TensorType, diagonal: int = 0, *, out=N
     except Exception:
         # Fallback: return input unchanged
         return input
-
-
-def torch_type_as_equivalent(
-    input: max_ops.TensorType, other: max_ops.TensorType
-) -> max_ops.TensorType:
-    return max_ops.cast(input, dtype=other.dtype)
 
 
 def torch_split_equivalent(
@@ -828,29 +791,6 @@ def torch_arange_equivalent(
     return max_ops.cast(result, dtype=dtype)
 
 
-def torch_new_ones_equivalent(
-    input: max_ops.TensorType,
-    size: tuple,
-    *,
-    dtype=None,
-    device=None,
-    requires_grad=False,
-    layout=torch.strided,
-    pin_memory=False,
-):
-    if dtype is None:
-        dtype = input.dtype
-    else:
-        dtype = DType.from_torch(dtype)
-
-    if device is None:
-        device = input.device
-    else:
-        device = max_device_ref(device)
-
-    return max_ops.constant(np.ones(size), dtype=dtype, device=device)
-
-
 def torch_full_equivalent(
     size,
     fill_value,
@@ -930,14 +870,6 @@ def torch_gelu_equivalent(input, approximate="none"):
         coeff = math.sqrt(2.0 / math.pi)
         inner = coeff * (input + 0.044715 * input * input * input)
         return 0.5 * input * (1.0 + max_ops.tanh(inner))
-
-
-def torch_silu_equivalent(input):
-    # SiLU (Sigmoid Linear Unit): x * sigmoid(x)
-    # sigmoid(x) = 1 / (1 + exp(-x))
-    # So SiLU(x) = x / (1 + exp(-x))
-    sigmoid_x = 1.0 / (1.0 + max_ops.exp(-input))
-    return input * sigmoid_x
 
 
 def torch_sum_equivalent(input, dim=None, keepdim=False, *, dtype=None):
@@ -1132,10 +1064,6 @@ def identity(x):
     return x
 
 
-def no_op(*args, **kwargs):
-    pass
-
-
 def torch_clone_equivalent(input, memory_format=None):
     return input
 
@@ -1282,13 +1210,6 @@ IDENTICAL_FUNCTIONS = [
     operator.ipow,
     operator.imod,
     operator.getitem,
-    torch.add,
-    torch.sub,
-    torch.mul,
-    torch.div,
-    torch.floor_divide,
-    torch.pow,
-    torch.remainder,
     str,
     max,
     min,
@@ -1296,62 +1217,6 @@ IDENTICAL_FUNCTIONS = [
 
 
 MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
-    torch.abs: max_ops.abs,
-    torch.cos: max_ops.cos,
-    torch.sin: max_ops.sin,
-    torch.rsqrt: max_ops.rsqrt,
-    torch.sqrt: max_ops.sqrt,
-    torch.mean: torch_mean_equivalent,
-    torch.cat: torch_cat_equivalent,
-    F.conv2d: torch_conv2d_equivalent,
-    F.embedding: torch_embedding_equivalent,
-    F.linear: torch_linear_equivalent,
-    F.relu: relu_equivalent,
-    F.max_pool2d: torch_max_pool2d_equivalent,
-    F.adaptive_avg_pool2d: torch_adaptive_avg_pool2d_equivalent,
-    F.dropout: torch_dropout_equivalent,
-    F.layer_norm: torch_layer_norm_equivalent,
-    F.gelu: torch_gelu_equivalent,
-    F.silu: torch_silu_equivalent,
-    F.softmax: torch_softmax_equivalent,
-    F.mse_loss: torch_mse_loss_equivalent,
-    F.group_norm: torch_group_norm_equivalent,
-    torch._C._nn.linear: torch_linear_equivalent,
-    torch.flatten: torch_flatten_equivalent,
-    # TODO: Use noop function
-    torch.amp.autocast_mode._enter_autocast: torch_autocast_equivalent,
-    torch.amp.autocast_mode._exit_autocast: torch_autocast_equivalent,
-    torch._C._log_api_usage_once: torch_log_api_usage_once_equivalent,
-    torch._functorch.vmap.lazy_load_decompositions: no_op,
-    torch._C._functorch._vmap_increment_nesting: no_op,
-    # torch._C._functorch._add_batch_dim: no_op,  # TODO: Fixme, this is not actually a no-op
-    torch.tril: torch_tril_equivalent,
-    torch.triu: torch_triu_equivalent,
-    torch.split: torch_split_equivalent,
-    torch.amax: torch_amax_equivalent,
-    torch.maximum: max_ops.max,
-    torch.amin: torch_amin_equivalent,
-    torch.minimum: max_ops.min,
-    torch.argmax: torch_argmax_equivalent,
-    torch.argmin: torch_argmin_equivalent,
-    torch.max: torch_max_equivalent,
-    torch.min: torch_min_equivalent,
-    torch.clamp: torch_clamp_equivalent,
-    torch.arange: torch_arange_equivalent,
-    torch.outer: max_ops.outer,
-    torch.stack: torch_stack_equivalent,
-    torch.sum: torch_sum_equivalent,
-    torch.matmul: operator.matmul,
-    torch.bmm: torch_bmm_equivalent,
-    torch.addmm: torch_addmm_equivalent,
-    torch.full: torch_full_equivalent,
-    torch.t: torch_t_equivalent,
-    torch.logical_not: torch_logical_not_equivalent,
-    # methods are given as strings in the graph
-    "float": torch_float_equivalent,
-    "expand": torch_expand_equivalent,
-    "to": torch_to_equivalent,
-    "transpose": torch_transpose_equivalent,
     aten.t: torch_t_equivalent,
     aten.addmm: torch_addmm_equivalent,
     aten.mse_loss: torch_mse_loss_equivalent,
@@ -1426,30 +1291,6 @@ MAPPING_TORCH_TO_MOJO_FUNCTIONS = {
     aten.exp: torch_exp_equivalent,
     aten.native_group_norm: torch_native_group_norm_equivalent,
     aten.logical_not: torch_logical_not_equivalent,
-    "view": torch_view_equivalent,
-    "contiguous": torch_contiguous_equivalent,
-    "unsqueeze": torch_unsqueeze_equivalent,
-    "flatten": torch_flatten_equivalent,
-    "abs": max_ops.abs,
-    "cos": max_ops.cos,
-    "sin": max_ops.sin,
-    "sqrt": max_ops.sqrt,
-    "rsqrt": max_ops.rsqrt,
-    "pow": operator.pow,
-    "mean": torch_mean_equivalent,
-    "tril": torch_tril_equivalent,
-    "triu": torch_triu_equivalent,
-    "type_as": torch_type_as_equivalent,
-    "split": torch_split_equivalent,
-    "max": max_ops.max,
-    "min": max_ops.min,
-    "new_ones": torch_new_ones_equivalent,
-    "masked_fill": torch_masked_fill_equivalent,
-    "sum": torch_sum_equivalent,
-    "reshape": torch_view_equivalent,  # reshape is equivalent to view for MAX backend
-    "unbind": torch_unbind_equivalent,
-    "repeat_interleave": torch_repeat_interleave_equivalent,
-    "t": torch_t_equivalent,
 }
 
 for func in IDENTICAL_FUNCTIONS:
