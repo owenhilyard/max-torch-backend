@@ -69,39 +69,9 @@ def map_to(func: callable) -> callable:
 # Add direct mappings with decorators
 
 
-@map_to(aten.eq)
-def aten_eq(x, y):
-    return operator.eq(x, y)
-
-
-@map_to(aten.ne)
-def aten_ne(x, y):
-    return operator.ne(x, y)
-
-
-@map_to(aten.gt)
-def aten_gt(x, y):
-    return operator.gt(x, y)
-
-
 @map_to(aten.floordiv)
 def aten_floordiv(x, y):
     return operator.floordiv(x, y)
-
-
-@map_to(aten.remainder)
-def aten_remainder(x, y):
-    return operator.mod(x, y)
-
-
-@map_to(aten.maximum)
-def aten_maximum(x, y):
-    return max_ops.max(x, y)
-
-
-@map_to(aten.minimum)
-def aten_minimum(x, y):
-    return max_ops.min(x, y)
 
 
 # _adaptive_avg_pool2d(Tensor self, SymInt[2] output_size) -> Tensor
@@ -301,8 +271,8 @@ def aten_amin(input, dim=None, keepdim=False, *, out=None):
 
 
 # any(Tensor self) -> Tensor
-
-
+# any.dim(Tensor self, int dim, bool keepdim=False) -> Tensor
+# any.dims(Tensor self, int[]? dim=None, bool keepdim=False) -> Tensor
 @map_to(aten.any)
 def aten_any(input, dim=None, keepdim=False, *, out=None):
     """
@@ -336,8 +306,6 @@ def aten_any(input, dim=None, keepdim=False, *, out=None):
     return result
 
 
-# any.dim(Tensor self, int dim, bool keepdim=False) -> Tensor
-# any.dims(Tensor self, int[]? dim=None, bool keepdim=False) -> Tensor
 # arange.start_step(Scalar start, Scalar end, Scalar step=1, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool? pin_memory=None) -> Tensor
 @map_to(aten.arange)
 def aten_arange(
@@ -457,6 +425,8 @@ def aten_argmin(input, dim=None, keepdim=False, *, out=None):
 # bitwise_or.Tensor(Tensor self, Tensor other) -> Tensor
 # bitwise_xor.Scalar(Tensor self, Scalar other) -> Tensor
 # bitwise_xor.Tensor(Tensor self, Tensor other) -> Tensor
+
+
 # bmm(Tensor self, Tensor mat2) -> Tensor
 @map_to(aten.bmm)
 def aten_bmm(input, mat2):
@@ -481,6 +451,8 @@ def aten_cat(tensors: list, dim=0):
 
 
 # ceil(Tensor self) -> Tensor
+
+
 # clamp(Tensor self, Scalar? min=None, Scalar? max=None) -> Tensor
 # clamp.Tensor(Tensor self, Tensor? min=None, Tensor? max=None) -> Tensor
 @map_to(aten.clamp)
@@ -571,6 +543,8 @@ def aten_convolution(
 
 # convolution_backward(Tensor grad_output, Tensor input, Tensor weight, SymInt[]? bias_sizes, SymInt[] stride, SymInt[] padding, SymInt[] dilation, bool transposed, SymInt[] output_padding, SymInt groups, bool[3] output_mask) -> (Tensor, Tensor, Tensor)
 # copy(Tensor self, Tensor src, bool non_blocking=False) -> Tensor
+
+
 # cos(Tensor self) -> Tensor
 @map_to(aten.cos)
 def aten_cos(x):
@@ -580,6 +554,8 @@ def aten_cos(x):
 # cosh(Tensor self) -> Tensor
 # cumsum(Tensor self, int dim, *, ScalarType? dtype=None) -> Tensor
 # diagonal(Tensor(a) self, int offset=0, int dim1=0, int dim2=1) -> Tensor(a)
+
+
 # div.Scalar(Tensor self, Scalar other) -> Tensor
 # div.Scalar_mode(Tensor self, Scalar other, *, str? rounding_mode) -> Tensor
 # div.Tensor(Tensor self, Tensor other) -> Tensor
@@ -600,6 +576,8 @@ def aten_div(input, other, *, rounding_mode=None):
 
 
 # elu(Tensor self, Scalar alpha=1, Scalar scale=1, Scalar input_scale=1) -> Tensor
+
+
 # embedding(Tensor weight, Tensor indices, SymInt padding_idx=-1, bool scale_grad_by_freq=False, bool sparse=False) -> Tensor
 @map_to(aten.embedding)
 def aten_embedding(
@@ -663,8 +641,15 @@ def torch_embedding_equivalent(
 # embedding_dense_backward(Tensor grad_output, Tensor indices, SymInt num_weights, SymInt padding_idx, bool scale_grad_by_freq) -> Tensor
 # empty.memory_format(SymInt[] size, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool? pin_memory=None, MemoryFormat? memory_format=None) -> Tensor
 # empty_strided(SymInt[] size, SymInt[] stride, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool? pin_memory=None) -> Tensor
+
+
 # eq.Scalar(Tensor self, Scalar other) -> Tensor
 # eq.Tensor(Tensor self, Tensor other) -> Tensor
+@map_to(aten.eq)
+def aten_eq(x, y):
+    return operator.eq(x, y)
+
+
 # erf(Tensor self) -> Tensor
 
 
@@ -711,6 +696,8 @@ def aten_expand(tensor, size: list[int]):
 # floor(Tensor self) -> Tensor
 # fmod.Scalar(Tensor self, Scalar other) -> Tensor
 # fmod.Tensor(Tensor self, Tensor other) -> Tensor
+
+
 # full(SymInt[] size, Scalar fill_value, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool? pin_memory=None) -> Tensor
 @map_to(aten.full)
 def aten_full(
@@ -803,8 +790,15 @@ def aten_gelu(input, approximate="none"):
 
 
 # grid_sampler_2d(Tensor input, Tensor grid, int interpolation_mode, int padding_mode, bool align_corners) -> Tensor
+
+
 # gt.Scalar(Tensor self, Scalar other) -> Tensor
 # gt.Tensor(Tensor self, Tensor other) -> Tensor
+@map_to(aten.gt)
+def aten_gt(x, y):
+    return operator.gt(x, y)
+
+
 # hardtanh(Tensor self, Scalar min_val=-1, Scalar max_val=1) -> Tensor
 
 
@@ -984,7 +978,12 @@ def aten_max_pool2d_with_indices(
 
 # max_pool2d_with_indices_backward(Tensor grad_output, Tensor self, int[2] kernel_size, int[2] stride, int[2] padding, int[2] dilation, bool ceil_mode, Tensor indices) -> Tensor
 # max_pool3d_with_indices(Tensor self, int[3] kernel_size, int[3] stride=[], int[3] padding=0, int[3] dilation=1, bool ceil_mode=False) -> (Tensor, Tensor)
+
+
 # maximum(Tensor self, Tensor other) -> Tensor
+@map_to(aten.maximum)
+def aten_maximum(x, y):
+    return max_ops.max(x, y)
 
 
 # mean(Tensor self, *, ScalarType? dtype=None) -> Tensor
@@ -1074,6 +1073,11 @@ def aten_min(*args, **kwargs):
 
 
 # minimum(Tensor self, Tensor other) -> Tensor
+@map_to(aten.minimum)
+def aten_minimum(x, y):
+    return max_ops.min(x, y)
+
+
 # mm(Tensor self, Tensor mat2) -> Tensor
 @map_to(aten.mm)
 def aten_mm(x, y):
@@ -1205,6 +1209,11 @@ def aten_native_layer_norm(input, normalized_shape, weight, bias, eps):
 
 # ne.Scalar(Tensor self, Scalar other) -> Tensor
 # ne.Tensor(Tensor self, Tensor other) -> Tensor
+@map_to(aten.ne)
+def aten_ne(x, y):
+    return operator.ne(x, y)
+
+
 # neg(Tensor self) -> Tensor
 @map_to(aten.neg)
 def aten_neg(x):
@@ -1212,6 +1221,8 @@ def aten_neg(x):
 
 
 # nonzero(Tensor self) -> Tensor
+
+
 # permute(Tensor(a) self, int[] dims) -> Tensor(a)
 @map_to(aten.permute)
 def aten_permute(x, dims):
@@ -1235,6 +1246,8 @@ def aten_pow(x, y):
 # reflection_pad1d(Tensor self, SymInt[2] padding) -> Tensor
 # reflection_pad2d(Tensor self, SymInt[4] padding) -> Tensor
 # reflection_pad3d(Tensor self, SymInt[6] padding) -> Tensor
+
+
 # relu(Tensor self) -> Tensor
 @map_to(aten.relu)
 def aten_relu(tensor, inplace: bool = False):
@@ -1244,11 +1257,18 @@ def aten_relu(tensor, inplace: bool = False):
 
 # remainder.Scalar(Tensor self, Scalar other) -> Tensor
 # remainder.Tensor(Tensor self, Tensor other) -> Tensor
+@map_to(aten.remainder)
+def aten_remainder(x, y):
+    return operator.mod(x, y)
+
+
 # repeat(Tensor self, SymInt[] repeats) -> Tensor
 # replication_pad2d(Tensor self, SymInt[4] padding) -> Tensor
 # replication_pad3d(Tensor self, SymInt[6] padding) -> Tensor
 # resize_(Tensor(a!) self, SymInt[] size, *, MemoryFormat? memory_format=None) -> Tensor(a!)
 # round(Tensor self) -> Tensor
+
+
 # rsqrt(Tensor self) -> Tensor
 @map_to(aten.rsqrt)
 def aten_rsqrt(x):
@@ -1280,7 +1300,6 @@ def aten_scalar_tensor(
 
 
 # select.int(Tensor(a) self, int dim, SymInt index) -> Tensor(a)
-# select_scatter(Tensor self, Tensor src, int dim, SymInt index) -> Tensor
 @map_to(aten.select)
 def aten_select(input: max_ops.TensorType, dim: int, index: int):
     """
@@ -1292,6 +1311,9 @@ def aten_select(input: max_ops.TensorType, dim: int, index: int):
     return input[slices]
 
 
+# select_scatter(Tensor self, Tensor src, int dim, SymInt index) -> Tensor
+
+
 # sigmoid(Tensor self) -> Tensor
 @map_to(aten.sigmoid)
 def aten_sigmoid(input):
@@ -1299,6 +1321,8 @@ def aten_sigmoid(input):
 
 
 # sign(Tensor self) -> Tensor
+
+
 # sin(Tensor self) -> Tensor
 @map_to(aten.sin)
 def aten_sin(x):
@@ -1342,6 +1366,14 @@ def aten_sqrt(x):
 
 # squeeze.dim(Tensor(a) self, int dim) -> Tensor(a)
 # squeeze.dims(Tensor(a) self, int[] dim) -> Tensor(a)
+@map_to(aten.squeeze)
+def aten_squeeze(input, dim):
+    if isinstance(dim, int):
+        dim = [dim]
+    result = input
+    for d in sorted(dim, reverse=True):
+        result = max_ops.squeeze(input, axis=d)
+    return result
 
 
 # sub.Scalar(Tensor self, Scalar other, Scalar alpha=1) -> Tensor
@@ -1379,37 +1411,6 @@ def aten_where(input, condition, other):
 
 
 # Add remaining functions from mappings.py that need to be available
-
-
-def torch_transpose_equivalent(tensor, dim0, dim1):
-    # Get the current tensor dimensions
-    ndim = len(tensor.shape)
-
-    # Handle negative dimensions
-    if dim0 < 0:
-        dim0 = ndim + dim0
-    if dim1 < 0:
-        dim1 = ndim + dim1
-
-    # Validate dimensions
-    if dim0 < 0 or dim0 >= ndim:
-        raise ValueError(
-            f"Dimension {dim0} out of range for tensor with {ndim} dimensions"
-        )
-    if dim1 < 0 or dim1 >= ndim:
-        raise ValueError(
-            f"Dimension {dim1} out of range for tensor with {ndim} dimensions"
-        )
-
-    # If dimensions are the same, no change needed
-    if dim0 == dim1:
-        return tensor
-
-    # Create permutation list - swap dim0 and dim1
-    perm = list(range(ndim))
-    perm[dim0], perm[dim1] = perm[dim1], perm[dim0]
-
-    return max_ops.permute(tensor, perm)
 
 
 @map_to(aten.stack)
@@ -1624,6 +1625,37 @@ def aten_t(input):
     return torch_transpose_equivalent(input, 0, 1)
 
 
+def torch_transpose_equivalent(tensor, dim0, dim1):
+    # Get the current tensor dimensions
+    ndim = len(tensor.shape)
+
+    # Handle negative dimensions
+    if dim0 < 0:
+        dim0 = ndim + dim0
+    if dim1 < 0:
+        dim1 = ndim + dim1
+
+    # Validate dimensions
+    if dim0 < 0 or dim0 >= ndim:
+        raise ValueError(
+            f"Dimension {dim0} out of range for tensor with {ndim} dimensions"
+        )
+    if dim1 < 0 or dim1 >= ndim:
+        raise ValueError(
+            f"Dimension {dim1} out of range for tensor with {ndim} dimensions"
+        )
+
+    # If dimensions are the same, no change needed
+    if dim0 == dim1:
+        return tensor
+
+    # Create permutation list - swap dim0 and dim1
+    perm = list(range(ndim))
+    perm[dim0], perm[dim1] = perm[dim1], perm[dim0]
+
+    return max_ops.permute(tensor, perm)
+
+
 @map_to(aten._foreach_add)
 def aten__foreach_add(tensors, others, alpha=1.0):
     """
@@ -1642,16 +1674,6 @@ def aten__foreach_add(tensors, others, alpha=1.0):
         else:
             result.append(tensor + alpha * other)
 
-    return result
-
-
-@map_to(aten.squeeze)
-def aten_squeeze(input, dim):
-    if isinstance(dim, int):
-        dim = [dim]
-    result = input
-    for d in sorted(dim, reverse=True):
-        result = max_ops.squeeze(input, axis=d)
     return result
 
 
