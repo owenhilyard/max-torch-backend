@@ -436,24 +436,14 @@ def torch_group_norm_equivalent(input, num_groups, weight=None, bias=None, eps=1
 
 
 # native_group_norm_backward(Tensor grad_out, Tensor input, Tensor mean, Tensor rstd, Tensor? weight, SymInt N, SymInt C, SymInt HxW, int group, bool[3] output_mask) -> (Tensor, Tensor, Tensor)
+
+
 # native_layer_norm(Tensor input, SymInt[] normalized_shape, Tensor? weight, Tensor? bias, float eps) -> (Tensor, Tensor, Tensor)
 @map_to(aten.native_layer_norm)
 def torch_native_layer_norm_equivalent(input, normalized_shape, weight, bias, eps):
     # expects a tuple or list for some reason
     # surely for the backward pass,
     # for the moment we only output the first one.
-    return (
-        torch_layer_norm_equivalent(
-            input, normalized_shape, weight=weight, bias=bias, eps=eps
-        ),
-    )
-
-
-# TODO: Is this mapping needed?
-@map_to(aten.layer_norm)
-def torch_layer_norm_equivalent(
-    input, normalized_shape, weight=None, bias=None, eps=1e-5
-):
     # Layer norm normalizes over the last len(normalized_shape) dimensions
     # Calculate mean and variance over these dimensions
     axis_to_reduce = list(
@@ -478,7 +468,8 @@ def torch_layer_norm_equivalent(
     if bias is not None:
         normalized = normalized + bias
 
-    return normalized
+    # TODO: Add the other outputs later
+    return (normalized,)
 
 
 # native_layer_norm_backward(Tensor grad_out, Tensor input, SymInt[] normalized_shape, Tensor mean, Tensor rstd, Tensor? weight, Tensor? bias, bool[3] output_mask) -> (Tensor, Tensor, Tensor)
