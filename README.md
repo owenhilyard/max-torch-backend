@@ -40,6 +40,45 @@ b = torch.tensor([4.0, 5.0, 6.0])
 print(simple_math(a, b))  # Accelerated execution
 ```
 
+### Training
+
+Training works as expected 
+
+```python
+from max_torch_backend import MaxCompiler
+import torch
+import torch.nn
+import torch.optim
+import torch.nn.functional as F
+
+class MyModel(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.linear = torch.nn.Linear(3, 2)
+
+    def forward(self, x):
+        return self.linear(x)
+
+device = "cuda"
+model = MyModel().to(device)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+
+@torch.compile(backend=MaxCompiler)
+def train_step(x, y):
+    model.train()
+    optimizer.zero_grad()
+    output = model(x)
+    loss = F.mse_loss(output, y)
+    loss.backward()
+    optimizer.step()
+    return loss
+
+a = torch.randn(5, 3).to(device)
+b = torch.randn(5, 2).to(device)
+
+print(train_step(a, b).cpu().detach().numpy())
+```
+
 ### Device Selection
 
 Note that currently the MAX backend does not support some older nvidia/amd gpus.
@@ -55,6 +94,7 @@ accelerators = get_accelerators()
 device = "cuda" if len(list(accelerators)) >= 2 else "cpu"
 model = model.to(device)
 ```
+
 
 ## Supported Operations
 
@@ -76,13 +116,19 @@ If you don't do so, Pytorch will compile a second time when it sees a different 
 You can find more information about dynamic shapes in the [PyTorch documentation](https://docs.pytorch.org/docs/stable/torch.compiler_dynamic_shapes.html).
 
 ### Compilation Strategy
-- Use `fullgraph=True` when possible for better optimization
+- Use `fullgraph=True` when possible for better optimization. You'll get an error message if 
+  pytorch has to trigger a graph break, making it easy to fix.
+
+### Debugging
+You can get various information with the following environement variables:
+* `TORCH_MAX_BACKEND_PROFILE=1` to get various information about timing (time to compile, time to run, ...)
+* `TORCH_MAX_BACKEND_VERBOSE=1` to display the graph(s) made by pytorch and various other information.
 
 ## Testing
 
 ```bash
 # Run all tests (the first time is slow, chaching kicks in after)
-uv run pytest -v -n 5
+uv run pytest -v -n 2 --forked
 
 # Lint and format
 uvx pre-commit run --all-files
