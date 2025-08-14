@@ -126,6 +126,40 @@ def aten__adaptive_avg_pool2d(input, output_size):
 # _native_batch_norm_legit_no_training(Tensor input, Tensor? weight, Tensor? bias, Tensor running_mean, Tensor running_var, float momentum, float eps) -> (Tensor, Tensor, Tensor)
 # _pdist_forward(Tensor self, float p=2) -> Tensor
 # _softmax(Tensor self, int dim, bool half_to_float) -> Tensor
+@map_to(aten._softmax)
+def aten__softmax(input, dim, half_to_float):
+    if half_to_float:
+        dtype = torch.float32
+    else:
+        dtype = None
+    return aten_softmax(input, dim=dim, dtype=dtype)
+
+
+@map_to(aten.softmax)
+def aten_softmax(input, dim=-1, dtype=None):
+    if dtype is not None:
+        max_dtype = DType.from_torch(dtype)
+        input = max_ops.cast(input, dtype=max_dtype)
+
+    # Handle negative dim
+    if dim < 0:
+        dim = len(input.shape) + dim
+
+    # Manual implementation
+    # Compute max along the specified axis for numerical stability, keeping dimensions
+    x_max = aten_amax(input, dim=[dim], keepdim=True)
+
+    # Subtract max for numerical stability
+    x_shifted = input - x_max
+
+    # Compute exponential
+    x_exp = max_ops.exp(x_shifted)
+
+    # Sum along the axis, keeping dimensions for broadcasting
+    x_sum = aten_sum(x_exp, dim=[dim], keepdim=True)
+
+    # Divide to get softmax
+    return x_exp / x_sum
 
 
 # _to_copy(Tensor self, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool? pin_memory=None, bool non_blocking=False, MemoryFormat? memory_format=None) -> Tensor
@@ -1388,6 +1422,34 @@ def aten_sub(input, other, *, alpha=1):
 
 
 # sum.dim_IntList(Tensor self, int[1]? dim, bool keepdim=False, *, ScalarType? dtype=None) -> Tensor
+@map_to(aten.sum)
+def aten_sum(input, dim=None, keepdim=False, *, dtype=None):
+    if dtype is not None:
+        max_dtype = DType.from_torch(dtype)
+        input = max_ops.cast(input, dtype=max_dtype)
+
+    result = input
+
+    if not dim:
+        dim = tuple(range(len(input.shape)))
+    elif isinstance(dim, int):
+        dim = (dim,)
+
+    dim = [x if x >= 0 else len(input.shape) + x for x in dim]
+
+    # Sum over each dimension
+    for axis in sorted(dim, reverse=True):
+        result = max_ops.sum(result, axis=axis)
+
+    # Handle keepdim=False - squeeze the reduced dimensions
+    if not keepdim:
+        # MAX's sum keeps dimensions by default, so we need to squeeze
+        for axis in sorted(dim, reverse=True):
+            result = max_ops.squeeze(result, axis=axis)
+
+    return result
+
+
 # sym_numel(Tensor self) -> SymInt
 # sym_size.int(Tensor self, int dim) -> SymInt
 # sym_storage_offset(Tensor self) -> SymInt
@@ -1554,70 +1616,6 @@ def aten_repeat_interleave(
     result = max_ops.reshape(expanded, new_shape)
 
     return result
-
-
-@map_to(aten.sum)
-def aten_sum(input, dim=None, keepdim=False, *, dtype=None):
-    if dtype is not None:
-        max_dtype = DType.from_torch(dtype)
-        input = max_ops.cast(input, dtype=max_dtype)
-
-    result = input
-
-    if not dim:
-        dim = tuple(range(len(input.shape)))
-    elif isinstance(dim, int):
-        dim = (dim,)
-
-    dim = [x if x >= 0 else len(input.shape) + x for x in dim]
-
-    # Sum over each dimension
-    for axis in sorted(dim, reverse=True):
-        result = max_ops.sum(result, axis=axis)
-
-    # Handle keepdim=False - squeeze the reduced dimensions
-    if not keepdim:
-        # MAX's sum keeps dimensions by default, so we need to squeeze
-        for axis in sorted(dim, reverse=True):
-            result = max_ops.squeeze(result, axis=axis)
-
-    return result
-
-
-@map_to(aten._softmax)
-def aten__softmax(input, dim, half_to_float):
-    if half_to_float:
-        dtype = torch.float32
-    else:
-        dtype = None
-    return aten_softmax(input, dim=dim, dtype=dtype)
-
-
-@map_to(aten.softmax)
-def aten_softmax(input, dim=-1, dtype=None):
-    if dtype is not None:
-        max_dtype = DType.from_torch(dtype)
-        input = max_ops.cast(input, dtype=max_dtype)
-
-    # Handle negative dim
-    if dim < 0:
-        dim = len(input.shape) + dim
-
-    # Manual implementation
-    # Compute max along the specified axis for numerical stability, keeping dimensions
-    x_max = aten_amax(input, dim=[dim], keepdim=True)
-
-    # Subtract max for numerical stability
-    x_shifted = input - x_max
-
-    # Compute exponential
-    x_exp = max_ops.exp(x_shifted)
-
-    # Sum along the axis, keeping dimensions for broadcasting
-    x_sum = aten_sum(x_exp, dim=[dim], keepdim=True)
-
-    # Divide to get softmax
-    return x_exp / x_sum
 
 
 @map_to(aten.t)
