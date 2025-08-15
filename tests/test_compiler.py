@@ -328,6 +328,15 @@ def test_sin(device: str, tensor_shapes: tuple):
     check_functions_are_equivalent(fn, device, [a])
 
 
+def test_tanh(device: str, tensor_shapes: tuple):
+    def fn(x):
+        return torch.tanh(x)
+
+    a = torch.randn(tensor_shapes)
+
+    check_functions_are_equivalent(fn, device, [a])
+
+
 def test_atanh(device: str, tensor_shapes: tuple):
     def fn(x):
         return torch.atanh(x)

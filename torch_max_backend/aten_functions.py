@@ -1622,6 +1622,12 @@ def aten_sin(x):
     return max_ops.sin(x)
 
 
+# tanh(Tensor self) -> Tensor
+@map_to(aten.tanh)
+def aten_tanh(x):
+    return max_ops.tanh(x)
+
+
 # sinh(Tensor self) -> Tensor
 
 
