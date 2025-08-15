@@ -169,7 +169,9 @@ We use test-driven dev
 2) Write a few unit tests in test_compiler.py using this op (somewhere in the middle of the file to avoid conflicts).
 3) Run those unit tests. You should see an error message explaining that the aten op is not supported.
 4) Find in aten_functions.py the comment giving the signature of the aten op.
-5) Just below it, write the aten op implementation.
-6) Re-run the unit tests and make sure they're passing. Do not hesistate to use pytest.mark.parametrize 
-  to test many input data types.
-  
+5) Look into the directory `../modular/max` to find if functions exist in MAX to do something similar (sometimes they have direct equivalents).
+6) Just below it, write the aten op implementation with the max functions you just found.
+7) Re-run the unit tests and make sure they're passing. Do not hesistate to use pytest.mark.parametrize 
+   to test many input data types.
+8) When you're done, make sure the whole test suite is passing with `uv run pytest -n 15` 
+   and the linter with `uvx pre-commit run --all-files`.
