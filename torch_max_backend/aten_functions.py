@@ -1731,7 +1731,16 @@ def aten_unsqueeze(tensor, dim):
 # upsample_nearest2d.vec(Tensor input, SymInt[]? output_size, float[]? scale_factors) -> Tensor
 # var.correction(Tensor self, int[1]? dim=None, *, Scalar? correction=None, bool keepdim=False) -> Tensor
 # var.dim(Tensor self, int[1]? dim, bool unbiased=True, bool keepdim=False) -> Tensor
+
+
 # view(Tensor(a) self, SymInt[] size) -> Tensor(a)
+@map_to(aten.view)
+def aten_view(tensor, *shape):
+    if len(shape) == 1 and isinstance(shape[0], tuple | list):
+        target_shape = list(shape[0])
+    else:
+        target_shape = list(shape)
+    return max_ops.reshape(tensor, target_shape)
 
 
 # where.self(Tensor condition, Tensor self, Tensor other) -> Tensor
@@ -1746,15 +1755,6 @@ def aten_where(input, condition, other):
 @map_to(aten.stack)
 def aten_stack(tensors: list, dim=0):
     return max_ops.stack(tensors, axis=dim)
-
-
-@map_to(aten.view)
-def aten_view(tensor, *shape):
-    if len(shape) == 1 and isinstance(shape[0], tuple | list):
-        target_shape = list(shape[0])
-    else:
-        target_shape = list(shape)
-    return max_ops.reshape(tensor, target_shape)
 
 
 @map_to(aten.tril)
