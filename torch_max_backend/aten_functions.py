@@ -1719,7 +1719,14 @@ def aten_sum(input, dim=None, keepdim=False, *, dtype=None):
 # tanh(Tensor self) -> Tensor
 # topk(Tensor self, SymInt k, int dim=-1, bool largest=True, bool sorted=True) -> (Tensor values, Tensor indices)
 # trunc(Tensor self) -> Tensor
+
+
 # unsqueeze(Tensor(a) self, int dim) -> Tensor(a)
+@map_to(aten.unsqueeze)
+def aten_unsqueeze(tensor, dim):
+    return max_ops.unsqueeze(tensor, axis=dim)
+
+
 # upsample_bilinear2d.vec(Tensor input, SymInt[]? output_size, bool align_corners, float[]? scale_factors) -> Tensor
 # upsample_nearest2d.vec(Tensor input, SymInt[]? output_size, float[]? scale_factors) -> Tensor
 # var.correction(Tensor self, int[1]? dim=None, *, Scalar? correction=None, bool keepdim=False) -> Tensor
@@ -1739,11 +1746,6 @@ def aten_where(input, condition, other):
 @map_to(aten.stack)
 def aten_stack(tensors: list, dim=0):
     return max_ops.stack(tensors, axis=dim)
-
-
-@map_to(aten.unsqueeze)
-def aten_unsqueeze(tensor, dim):
-    return max_ops.unsqueeze(tensor, axis=dim)
 
 
 @map_to(aten.view)
