@@ -160,3 +160,16 @@ def my_function(x, y):
 ```
 
 Device compatibility should be checked using `get_accelerators()` before GPU usage.
+
+
+## To add support for an op
+To add support for an op, the process is the following:
+We use test-driven dev
+1) Find a basic torch function that's very close to the aten op you want to use.
+2) Write a few unit tests in test_compiler.py using this op (somewhere in the middle of the file to avoid conflicts).
+3) Run those unit tests. You should see an error message explaining that the aten op is not supported.
+4) Find in aten_functions.py the comment giving the signature of the aten op.
+5) Just below it, write the aten op implementation.
+6) Re-run the unit tests and make sure they're passing. Do not hesistate to use pytest.mark.parametrize 
+  to test many input data types.
+  
