@@ -5,7 +5,7 @@ Simply use [`torch.compile`](https://docs.pytorch.org/tutorials/intermediate/tor
 ## Installation
 
 ```bash
-pip install git+https://github.com/gabrieldemarmiesse/max-torch-backend.git
+pip install torch-max-backend
 ```
 
 ## Quick Start
