@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "max-torch-backend"
-version = "0.1.0"
+name = "torch-max-backend"
+version = "0.1.1"
 description = "A PyTorch backend implemented using Modular's MAX framework"
 readme = "README.md"
 license = { file = "LICENSE" }
