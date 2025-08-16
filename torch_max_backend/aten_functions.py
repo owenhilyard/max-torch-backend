@@ -71,14 +71,35 @@ for func in IDENTICAL_FUNCTIONS:
 number_of_decompositions_removed = 0
 
 
-def map_to(func):
-    def decorator(func_to_map):
+def map_to(func: callable) -> callable:
+    """
+    Registers a function implementation and wraps it with a CUDA-aware
+    PyTorch profiling range labeled after the mapped aten op.
+
+    Example label: MAX/aten.add
+    """
+    # Derive a stable and descriptive label from the target aten op
+    try:
+        op_name = func.__name__
+    except AttributeError:
+        op_name = str(func)
+    profile_label = f"MAX/{op_name}"
+
+    def decorator(impl):
+        # Wrap the original implementation with a record_function scope
+        def wrapped(*args, **kwargs):
+            # record_function provides a range visible to PyTorch profiler
+            # When running with torch.autograd.profiler.profile(use_cuda=True),
+            # this range will include CUDA kernels launched within.
+            with torch.autograd.profiler.record_function(profile_label):
+                return impl(*args, **kwargs)
+            
         if os.environ.get("TORCH_MAX_BACKEND_BEARTYPE", "1") == "1":
             from beartype import beartype
 
-            func_to_map = beartype(func_to_map)
-
-        MAPPING_TORCH_ATEN_TO_MAX[func] = func_to_map
+            wrapped = beartype(wrapped)
+        # Register the wrapped implementation so the profiler ranges cover all calls
+        MAPPING_TORCH_ATEN_TO_MAX[func] = wrapped
         if isinstance(func, OpOverload):
             DECOMPOSITION_TABLE.pop(func, None)
         elif isinstance(func, OpOverloadPacket):
@@ -93,9 +114,10 @@ def map_to(func):
             raise TypeError(
                 f"Expected OpOverload or OpOverloadPacket, got {type(func)}"
             )
-        return func_to_map
+        return wrapped
 
     return decorator
+
 
 
 # Add direct mappings with decorators

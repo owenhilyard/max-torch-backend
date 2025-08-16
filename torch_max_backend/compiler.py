@@ -13,9 +13,11 @@ from max.driver import Device
 from functorch.compile import make_boxed_func
 from torch_max_backend.aten_functions import DECOMPOSITION_TABLE
 from torch_max_backend.flags import profiling_enabled, verbose_enabled
+from torch.profiler import profile, ProfilerActivity
 import time
 import traceback
 from typing import Any
+
 
 
 class MaxCompilerError(Exception):
@@ -323,9 +325,22 @@ class BaseMaxCompiler:
     def __call__(self, *args) -> list[torch.Tensor | None]:
         # Detach tensors to avoid gradient tracking issues with DLpack
         if profiling_enabled():
+            prof = profile(activities=[ProfilerActivity.CUDA], use_cuda=True).__enter__()
             start_inference_time = time.time_ns()
         outputs = self.model.execute(*keep_only_tensors(args, detach=True))
+        if profiling_enabled():
+            end_execute_time = time.time_ns()
+            prof.__exit__(None, None, None)
+            print("MAX graph executed in", dt.timedelta(
+                microseconds=(end_execute_time - start_inference_time) / 1000
+            ))
+            print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
         tensor_outputs = [torch.from_dlpack(x) for x in outputs]
+        if profiling_enabled():
+            end_transfer_time = time.time_ns()
+            print("Outputs moved to pytorch in", dt.timedelta(
+                microseconds=(end_transfer_time - end_execute_time) / 1000
+            ))
 
         # Reconstruct the original output structure with None values
         result = []
