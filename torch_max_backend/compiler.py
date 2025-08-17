@@ -372,9 +372,12 @@ class BaseMaxCompiler:
     def __init__(self, gm: torch.fx.GraphModule, example_inputs: list, mode=None):
         if profiling_enabled():
             compiler_start = time.time_ns()
-        self.example_inputs = example_inputs
+        if verbose_enabled():
+            print(f"before composition, graph has {len(gm.graph.nodes)} nodes.")
+
         gm = apply_decompositions(gm)
         if verbose_enabled():
+            print(f"after composition, graph has {len(gm.graph.nodes)} nodes.")
             gm.graph.print_tabular()
 
         graph, self.output_blueprint = _GraphFactory().create_graph(gm)
