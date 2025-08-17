@@ -362,7 +362,7 @@ wheels = [
 
 [[package]]
 name = "max"
-version = "25.6.0.dev2025081505"
+version = "25.6.0.dev2025081619"
 source = { registry = "https://dl.modular.com/public/nightly/python/simple/" }
 dependencies = [
     { name = "mblack" },
@@ -370,14 +370,14 @@ dependencies = [
     { name = "typing-extensions" },
 ]
 wheels = [
-    { url = "https://dl.modular.com/public/nightly/python/max-25.6.0.dev2025081505-py3-none-macosx_13_0_arm64.whl", hash = "sha256:b7997c346061492585479cf076bf1eafb7a0559fae1358ee304fbad90b5fd6d4" },
-    { url = "https://dl.modular.com/public/nightly/python/max-25.6.0.dev2025081505-py3-none-manylinux_2_34_aarch64.whl", hash = "sha256:90abf188e519fdcb37eff906f0a8365e5dc096b28ce8b75a633c0df50d44e6c5" },
-    { url = "https://dl.modular.com/public/nightly/python/max-25.6.0.dev2025081505-py3-none-manylinux_2_34_x86_64.whl", hash = "sha256:4d8fb8b6f266b2b058bc308241551820ad0f8e58f624bbede054f64d5f9b63f3" },
+    { url = "https://dl.modular.com/public/nightly/python/max-25.6.0.dev2025081619-py3-none-macosx_13_0_arm64.whl", hash = "sha256:c3343579814cac15f9fbbc6e6f71cff348b8964b175cd1550760664d2fc37f89" },
+    { url = "https://dl.modular.com/public/nightly/python/max-25.6.0.dev2025081619-py3-none-manylinux_2_34_aarch64.whl", hash = "sha256:a13be507c3993744ef6c775950b447f4dbebd17beb0355399ebb2cbecebcf060" },
+    { url = "https://dl.modular.com/public/nightly/python/max-25.6.0.dev2025081619-py3-none-manylinux_2_34_x86_64.whl", hash = "sha256:9ec49c6e56685d6d5dd9e516f3c5991440f9502fc7815a48aabe25691e966c94" },
 ]
 
 [[package]]
 name = "mblack"
-version = "25.6.0.dev2025081505"
+version = "25.6.0.dev2025081619"
 source = { registry = "https://dl.modular.com/public/nightly/python/simple/" }
 dependencies = [
     { name = "click" },
@@ -386,7 +386,7 @@ dependencies = [
     { name = "platformdirs" },
 ]
 wheels = [
-    { url = "https://dl.modular.com/public/nightly/python/mblack-25.6.0.dev2025081505-py3-none-any.whl", hash = "sha256:70386302a5bdc2b5c05643cdebef2b3c144000869a9db79201324c84a09761df" },
+    { url = "https://dl.modular.com/public/nightly/python/mblack-25.6.0.dev2025081619-py3-none-any.whl", hash = "sha256:219a88831740880a99b936ce520da009bc2427d90f8c8f4ff50c6c0b06495d13" },
 ]
 
 [[package]]
@@ -1289,8 +1289,8 @@ dev = [
     { name = "hatchling" },
     { name = "ibm-fms", specifier = ">=1.2.1" },
     { name = "ipython" },
-    { name = "max", specifier = "==25.6.0.dev2025081505", index = "https://dl.modular.com/public/nightly/python/simple/" },
-    { name = "mblack", specifier = "==25.6.0.dev2025081505", index = "https://dl.modular.com/public/nightly/python/simple/" },
+    { name = "max", specifier = "==25.6.0.dev2025081619", index = "https://dl.modular.com/public/nightly/python/simple/" },
+    { name = "mblack", specifier = "==25.6.0.dev2025081619", index = "https://dl.modular.com/public/nightly/python/simple/" },
     { name = "pillow", specifier = ">=11.3.0" },
     { name = "pytest", specifier = ">=8.4.1" },
     { name = "pytest-forked", specifier = ">=1.6.0" },

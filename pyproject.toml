@@ -55,8 +55,8 @@ skip-magic-trailing-comma = true
 [dependency-groups]
 dev = [
     # Bump the version of max nightly here
-    "mblack==25.6.0.dev2025081505",
-    "max==25.6.0.dev2025081505",
+    "mblack==25.6.0.dev2025081619",
+    "max==25.6.0.dev2025081619",
     "accelerate>=1.10.0",
     "hatchling",
     "ibm-fms>=1.2.1",
