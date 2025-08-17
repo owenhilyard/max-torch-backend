@@ -13,6 +13,7 @@ dependencies = [
     "max",
     "tabulate",
     "torch",
+    "beartype>=0.17.0",
 ]
 
 [project.urls]
