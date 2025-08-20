@@ -117,7 +117,7 @@ start = time.time()
 output_token_ids = generate(
     model=model,
     idx=torch.tensor(input_token_ids, device=device).unsqueeze(0),
-    max_new_tokens=150,
+    max_new_tokens=80,
     context_size=QWEN_CONFIG_06_B["context_length"],
     top_k=1,
     temperature=0.0,
